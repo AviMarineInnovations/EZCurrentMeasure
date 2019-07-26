@@ -3,9 +3,11 @@ package `in`.avimarine.seawatercurrentmeasure
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.pm.PackageManager
+import android.graphics.Color
 import android.location.Location
 import android.os.Bundle
 import android.view.View
+import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
@@ -13,19 +15,34 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.google.android.gms.location.*
+import kotlinx.android.synthetic.main.activity_main.*
 import net.sf.geographiclib.Geodesic
 import net.sf.geographiclib.GeodesicMask
+import java.time.Instant.ofEpochMilli
+import java.time.LocalDateTime
+import java.time.ZoneId.systemDefault
 
 
 class MainActivity : AppCompatActivity() {
-    private lateinit var textView2: TextView
+    private lateinit var tv_dist: TextView
+    private lateinit var button: Button
+    private lateinit var tv_speed: TextView
+    private lateinit var tv_time2: TextView
+    private lateinit var tv_lon2: TextView
+    private lateinit var tv_lat2: TextView
+    private lateinit var tv_time1: TextView
+    private lateinit var tv_lon1: TextView
+    private lateinit var tv_lat1: TextView
+    private lateinit var tv_last_time: TextView
+    private lateinit var tv_last_lon: TextView
+    private lateinit var tv_dir: TextView
+    private lateinit var tv_last_lat: TextView
     private var lastLocationTime: Long = 0
     private var lastLocation: Location? = null
     private var firstTime: Long = 0
     private var secondTime: Long = 0
     private var firstLocation: Location? = null
     private var secondLocation: Location? = null
-    private lateinit var textView: TextView
     private val MY_PERMISSIONS_REQUEST: Int = 12345
     private var locationRequest: LocationRequest? = null
     private val UPDATE_INTERVAL: Long = 1000
@@ -39,8 +56,19 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
-        textView = findViewById(R.id.textView) as TextView
-        textView2 = findViewById(R.id.textView2) as TextView
+        tv_last_lat = findViewById(R.id.text_last_lat) as TextView
+        tv_last_lon = findViewById(R.id.text_last_lon) as TextView
+        tv_last_time = findViewById(R.id.text_last_time) as TextView
+        tv_lat1 = findViewById(R.id.text_lat1) as TextView
+        tv_lon1 = findViewById(R.id.text_lon1) as TextView
+        tv_time1 = findViewById(R.id.text_time1) as TextView
+        tv_lat2 = findViewById(R.id.text_lat2) as TextView
+        tv_lon2 = findViewById(R.id.text_lon2) as TextView
+        tv_time2 = findViewById(R.id.text_time2) as TextView
+        tv_speed = findViewById(R.id.text_speed) as TextView
+        tv_dir = findViewById(R.id.text_dir) as TextView
+        tv_dist = findViewById(R.id.text_dist) as TextView
+        button = findViewById(R.id.start_btn) as Button
 
         if (!isLocationPermissionGranted())
             askForPermissions()
@@ -51,12 +79,23 @@ class MainActivity : AppCompatActivity() {
                 for (location in locationResult.locations){
                     lastLocation = location
                     lastLocationTime = location.time
-
-                    textView2.text = lastLocation.toString()
+                    locationIntoTextViews(location, tv_last_lat,tv_last_lon,tv_last_time)
                 }
             }
         }
         startLocationUpdates()
+    }
+
+    private fun locationIntoTextViews(loc: Location, lat_tv: TextView, lon_tv: TextView, time_tv:TextView, empty: Boolean = false){
+        if (empty){
+            lat_tv.text = "?"
+            lon_tv.text = "?"
+            time_tv.text = "?"
+        }else {
+            lat_tv.text = String.format("%.6f", loc.latitude)
+            lon_tv.text = String.format("%.6f", loc.longitude)
+            time_tv.text = timeStamptoDateString(loc.time)
+        }
     }
 
     private fun askForPermissions() {
@@ -92,31 +131,43 @@ class MainActivity : AppCompatActivity() {
                         if (firstLocation == null) {
                             firstLocation = location
                             firstTime = System.currentTimeMillis()
+                            locationIntoTextViews(location, text_lat1,text_lon1,text_time1)
+                            locationIntoTextViews(location, text_lat2,text_lon2,text_time2,true)
+                            tv_speed.text = "?"
+                            tv_dir.text = "?"
+                            tv_dist.text = "?"
+                            button.text = "Stop"
+                            button.setBackgroundColor(Color.RED)
+
                         } else {
                             secondLocation = location
                             secondTime = System.currentTimeMillis()
+                            locationIntoTextViews(location, text_lat2,text_lon2,text_time2)
                             val dist = getDistance(
                                 firstLocation!!.latitude, firstLocation!!.longitude, secondLocation!!.latitude,
                                 secondLocation!!.longitude
                             )
-                            val dir = getDirection(
+                            var dir = getDirection(
                                 firstLocation!!.latitude, firstLocation!!.longitude, secondLocation!!.latitude,
                                 secondLocation!!.longitude
                             )
                             val speed = getSpeed(dist, firstTime, secondTime)
-                            textView.text = dist.toString() + ", " + dir.toString() + ", " + speed.toString()
+                            tv_speed.text = String.format("%.1f", speed) + " m/min"
+                            if (dir < 0) dir = 360+dir
+                            tv_dir.text = String.format("%.1f", dir)
+                            tv_dist.text = String.format("%d meters", dist.toInt())
                             firstLocation = null
                             secondLocation = null
+                            button.text = "Start"
+                            button.setBackgroundColor(Color.GRAY)
                         }
-                    } else {
-                        textView.text = "Null"
                     }
                 }
         }
     }
 
     private fun getSpeed(dist: Double, firstTime: Long, secondTime: Long): Any {
-        val duration = (secondTime - firstTime).toDouble() / 1000
+        val duration = (secondTime - firstTime).toDouble() / (1000 * 60)
         return dist / duration
     }
 
@@ -194,6 +245,10 @@ class MainActivity : AppCompatActivity() {
         super.onPause()
         stopLocationUpdates()
     }
+    override fun onResume() {
+        super.onResume()
+        startLocationUpdates()
+    }
 
     private fun stopLocationUpdates() {
         fusedLocationClient.removeLocationUpdates(locationCallback)
@@ -219,6 +274,11 @@ class MainActivity : AppCompatActivity() {
         fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, null)
     }
 
+
+    private fun timeStamptoDateString(timestamp: Long): String{
+        val date = LocalDateTime.ofInstant(ofEpochMilli(timestamp), systemDefault())
+        return date.toString()
+    }
 
 }
 
