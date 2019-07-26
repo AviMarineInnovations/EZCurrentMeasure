@@ -268,7 +268,7 @@
           app:layout_constraintBottom_toBottomOf="@+id/text_time_label2"
           app:layout_constraintTop_toTopOf="@+id/text_time_label2"/>
   <TextView
-          android:text="You can also use volume down key"
+          android:text="(You can also use volume down key)"
           android:layout_width="wrap_content"
           android:layout_height="wrap_content"
           android:id="@+id/textView3" android:layout_marginTop="8dp"

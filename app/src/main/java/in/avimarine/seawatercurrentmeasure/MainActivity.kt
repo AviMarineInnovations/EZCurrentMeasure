@@ -131,12 +131,12 @@ class MainActivity : AppCompatActivity() {
                 == PackageManager.PERMISSION_GRANTED)
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
-        if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN) {
+        if (keyCode == KEYCODE_VOLUME_DOWN) {
             startButtonClick(start_btn)
+            return true
         }
-        return true
+        return super.onKeyDown(keyCode, event)
     }
-
 
     @SuppressLint("MissingPermission")
     fun startButtonClick(view: View) {
