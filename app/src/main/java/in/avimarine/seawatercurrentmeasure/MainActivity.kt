@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import android.graphics.Color
 import android.location.Location
 import android.os.Bundle
+import android.view.KeyEvent
 import android.view.View
 import android.widget.Button
 import android.widget.TextView
@@ -21,9 +22,14 @@ import net.sf.geographiclib.GeodesicMask
 import java.time.Instant.ofEpochMilli
 import java.time.LocalDateTime
 import java.time.ZoneId.systemDefault
+import java.time.format.DateTimeFormatter
+import android.view.KeyEvent.KEYCODE_VOLUME_DOWN
+
+
 
 
 class MainActivity : AppCompatActivity() {
+    private lateinit var tv_last_acc: TextView
     private lateinit var tv_dist: TextView
     private lateinit var button: Button
     private lateinit var tv_speed: TextView
@@ -59,6 +65,7 @@ class MainActivity : AppCompatActivity() {
         tv_last_lat = findViewById(R.id.text_last_lat) as TextView
         tv_last_lon = findViewById(R.id.text_last_lon) as TextView
         tv_last_time = findViewById(R.id.text_last_time) as TextView
+        tv_last_acc = findViewById(R.id.text_last_acc) as TextView
         tv_lat1 = findViewById(R.id.text_lat1) as TextView
         tv_lon1 = findViewById(R.id.text_lon1) as TextView
         tv_time1 = findViewById(R.id.text_time1) as TextView
@@ -79,22 +86,26 @@ class MainActivity : AppCompatActivity() {
                 for (location in locationResult.locations){
                     lastLocation = location
                     lastLocationTime = location.time
-                    locationIntoTextViews(location, tv_last_lat,tv_last_lon,tv_last_time)
+                    locationIntoTextViews(location, tv_last_lat,tv_last_lon,tv_last_time,tv_last_acc)
                 }
             }
         }
         startLocationUpdates()
     }
 
-    private fun locationIntoTextViews(loc: Location, lat_tv: TextView, lon_tv: TextView, time_tv:TextView, empty: Boolean = false){
+    private fun locationIntoTextViews(loc: Location, lat_tv: TextView, lon_tv: TextView, time_tv:TextView, acc_tv:TextView? = null , empty: Boolean = false){
         if (empty){
             lat_tv.text = "?"
             lon_tv.text = "?"
             time_tv.text = "?"
+            if (acc_tv!=null)
+                acc_tv.text = "?"
         }else {
             lat_tv.text = String.format("%.6f", loc.latitude)
             lon_tv.text = String.format("%.6f", loc.longitude)
             time_tv.text = timeStamptoDateString(loc.time)
+            if (acc_tv!=null)
+                acc_tv.text = String.format("%.1f m", loc.accuracy)
         }
     }
 
@@ -119,6 +130,13 @@ class MainActivity : AppCompatActivity() {
         (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED)
 
+    override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
+        if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN) {
+            startButtonClick(start_btn)
+        }
+        return true
+    }
+
 
     @SuppressLint("MissingPermission")
     fun startButtonClick(view: View) {
@@ -131,8 +149,8 @@ class MainActivity : AppCompatActivity() {
                         if (firstLocation == null) {
                             firstLocation = location
                             firstTime = System.currentTimeMillis()
-                            locationIntoTextViews(location, text_lat1,text_lon1,text_time1)
-                            locationIntoTextViews(location, text_lat2,text_lon2,text_time2,true)
+                            locationIntoTextViews(location, text_lat1,text_lon1,text_time1,null)
+                            locationIntoTextViews(location, text_lat2,text_lon2,text_time2,null,true)
                             tv_speed.text = "?"
                             tv_dir.text = "?"
                             tv_dist.text = "?"
@@ -154,7 +172,7 @@ class MainActivity : AppCompatActivity() {
                             val speed = getSpeed(dist, firstTime, secondTime)
                             tv_speed.text = String.format("%.1f", speed) + " m/min"
                             if (dir < 0) dir = 360+dir
-                            tv_dir.text = String.format("%.1f", dir)
+                            tv_dir.text = String.format("%d", dir.toInt())
                             tv_dist.text = String.format("%d meters", dist.toInt())
                             firstLocation = null
                             secondLocation = null
@@ -277,7 +295,8 @@ class MainActivity : AppCompatActivity() {
 
     private fun timeStamptoDateString(timestamp: Long): String{
         val date = LocalDateTime.ofInstant(ofEpochMilli(timestamp), systemDefault())
-        return date.toString()
+        val formatter = DateTimeFormatter.ofPattern("(dd)HH:mm:ss")
+        return date.format(formatter)
     }
 
 }
