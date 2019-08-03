@@ -2,11 +2,17 @@ package `in`.avimarine.seawatercurrentmeasure
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
+import android.hardware.GeomagneticField
 import android.location.Location
 import android.os.Bundle
+import android.util.Log
 import android.view.KeyEvent
+import android.view.KeyEvent.KEYCODE_VOLUME_DOWN
+import android.view.Menu
+import android.view.MenuItem
 import android.view.View
 import android.widget.Button
 import android.widget.TextView
@@ -15,6 +21,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.preference.PreferenceManager
 import com.google.android.gms.location.*
 import kotlinx.android.synthetic.main.activity_main.*
 import net.sf.geographiclib.Geodesic
@@ -23,9 +30,6 @@ import java.time.Instant.ofEpochMilli
 import java.time.LocalDateTime
 import java.time.ZoneId.systemDefault
 import java.time.format.DateTimeFormatter
-import android.view.KeyEvent.KEYCODE_VOLUME_DOWN
-
-
 
 
 class MainActivity : AppCompatActivity() {
@@ -47,8 +51,8 @@ class MainActivity : AppCompatActivity() {
     private var lastLocation: Location? = null
     private var firstTime: Long = 0
     private var secondTime: Long = 0
-    private var firstLocation: Location? = null
-    private var secondLocation: Location? = null
+    private lateinit var firstLocation: Location
+    private lateinit var secondLocation: Location
     private val MY_PERMISSIONS_REQUEST: Int = 12345
     private var locationRequest: LocationRequest? = null
     private val UPDATE_INTERVAL: Long = 1000
@@ -56,6 +60,10 @@ class MainActivity : AppCompatActivity() {
 
 
     private lateinit var locationCallback: LocationCallback
+    val Any.TAG: String
+        get() {
+            return javaClass.simpleName
+        }
 
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -83,28 +91,42 @@ class MainActivity : AppCompatActivity() {
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(locationResult: LocationResult?) {
                 locationResult ?: return
-                for (location in locationResult.locations){
+                for (location in locationResult.locations) {
                     lastLocation = location
                     lastLocationTime = location.time
-                    locationIntoTextViews(location, tv_last_lat,tv_last_lon,tv_last_time,tv_last_acc)
+                    locationIntoTextViews(location, tv_last_lat, tv_last_lon, tv_last_time, tv_last_acc)
                 }
             }
         }
         startLocationUpdates()
     }
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.main_menu, menu)
+        return true
+    }
 
-    private fun locationIntoTextViews(loc: Location, lat_tv: TextView, lon_tv: TextView, time_tv:TextView, acc_tv:TextView? = null , empty: Boolean = false){
-        if (empty){
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        val id = item.getItemId()
+        if (id == R.id.settings_menu_action) {
+            val intent = Intent(this, MySettingsActivity::class.java)
+            this.startActivity(intent)
+            return true
+        }
+        return super.onOptionsItemSelected(item)
+    }
+
+    private fun locationIntoTextViews(loc: Location, lat_tv: TextView, lon_tv: TextView, time_tv: TextView, acc_tv: TextView? = null, empty: Boolean = false) {
+        if (empty) {
             lat_tv.text = "?"
             lon_tv.text = "?"
             time_tv.text = "?"
-            if (acc_tv!=null)
+            if (acc_tv != null)
                 acc_tv.text = "?"
-        }else {
+        } else {
             lat_tv.text = String.format("%.6f", loc.latitude)
             lon_tv.text = String.format("%.6f", loc.longitude)
             time_tv.text = timeStamptoDateString(loc.time)
-            if (acc_tv!=null)
+            if (acc_tv != null)
                 acc_tv.text = String.format("%.1f m", loc.accuracy)
         }
     }
@@ -112,23 +134,23 @@ class MainActivity : AppCompatActivity() {
     private fun askForPermissions() {
         if (!isLocationPermissionGranted()) {
             if (ActivityCompat.shouldShowRequestPermissionRationale(
-                    this, Manifest.permission.ACCESS_FINE_LOCATION
-                )
+                            this, Manifest.permission.ACCESS_FINE_LOCATION
+                    )
             ) {
                 // Show an explanation to the user *asynchronously* -- don't block
                 // this thread waiting for the user's response! After the user
                 // sees the explanation, try again to request the permission.
             } else {
                 ActivityCompat.requestPermissions(
-                    this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), MY_PERMISSIONS_REQUEST
+                        this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), MY_PERMISSIONS_REQUEST
                 )
             }
         }
     }
 
     private fun isLocationPermissionGranted() =
-        (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-                == PackageManager.PERMISSION_GRANTED)
+            (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                    == PackageManager.PERMISSION_GRANTED)
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
         if (keyCode == KEYCODE_VOLUME_DOWN) {
@@ -140,58 +162,94 @@ class MainActivity : AppCompatActivity() {
 
     @SuppressLint("MissingPermission")
     fun startButtonClick(view: View) {
+        val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this /* Activity context */)
+        val magnetic = sharedPreferences.getBoolean("magnetic", false)
+        val from_notation = sharedPreferences.getBoolean("from_notation", false)
+        val speedUnit = sharedPreferences.getString("speed_unit", "m_per_min")
+
+
         if (!isLocationPermissionGranted())
             askForPermissions()
         else {
-            fusedLocationClient.lastLocation
-                .addOnSuccessListener { location: Location? ->
-                    if (location != null) {
-                        if (firstLocation == null) {
-                            firstLocation = location
-                            firstTime = System.currentTimeMillis()
-                            locationIntoTextViews(location, text_lat1,text_lon1,text_time1,null)
-                            locationIntoTextViews(location, text_lat2,text_lon2,text_time2,null,true)
-                            tv_speed.text = "?"
-                            tv_dir.text = "?"
-                            tv_dist.text = "?"
-                            button.text = "Stop"
-                            button.setBackgroundColor(Color.RED)
+            fusedLocationClient.lastLocation //TODO check why I can do that (location can be null)
+                    .addOnSuccessListener { location: Location ->
+                        if (location != null) {
+                            if (firstTime == 0L) {
+                                firstLocation = location
+                                firstTime = System.currentTimeMillis()
+                                locationIntoTextViews(location, text_lat1, text_lon1, text_time1, null)
+                                locationIntoTextViews(location, text_lat2, text_lon2, text_time2, null, true)
+                                tv_speed.text = "?"
+                                tv_dir.text = "?"
+                                tv_dist.text = "?"
+                                button.text = "Stop"
+                                button.setBackgroundColor(Color.RED)
 
-                        } else {
-                            secondLocation = location
-                            secondTime = System.currentTimeMillis()
-                            locationIntoTextViews(location, text_lat2,text_lon2,text_time2)
-                            val dist = getDistance(
-                                firstLocation!!.latitude, firstLocation!!.longitude, secondLocation!!.latitude,
-                                secondLocation!!.longitude
-                            )
-                            var dir = getDirection(
-                                firstLocation!!.latitude, firstLocation!!.longitude, secondLocation!!.latitude,
-                                secondLocation!!.longitude
-                            )
-                            val speed = getSpeed(dist, firstTime, secondTime)
-                            tv_speed.text = String.format("%.1f", speed) + " m/min"
-                            if (dir < 0) dir = 360+dir
-                            tv_dir.text = String.format("%d", dir.toInt())
-                            tv_dist.text = String.format("%d meters", dist.toInt())
-                            firstLocation = null
-                            secondLocation = null
-                            button.text = "Start"
-                            button.setBackgroundColor(Color.GRAY)
+                            } else {
+                                secondLocation = location
+                                secondTime = System.currentTimeMillis()
+                                locationIntoTextViews(location, text_lat2, text_lon2, text_time2)
+                                val dist = getDistance(
+                                        firstLocation.latitude, firstLocation.longitude, secondLocation.latitude,
+                                        secondLocation.longitude
+                                )
+                                var dir = getDirection(
+                                        firstLocation.latitude, firstLocation.longitude, secondLocation.latitude,
+                                        secondLocation.longitude
+                                )
+                                tv_speed.text = getSpeedString(firstTime, secondTime, dist, speedUnit)
+
+                                tv_dir.text = s(dir, magnetic,from_notation)
+                                tv_dist.text = String.format("%d meters", dist.toInt())
+                                firstTime = 0
+                                secondTime = 0
+                                button.text = "Start"
+                                button.setBackgroundColor(Color.GRAY)
+                            }
                         }
                     }
-                }
         }
     }
 
-    private fun getSpeed(dist: Double, firstTime: Long, secondTime: Long): Any {
-        val duration = (secondTime - firstTime).toDouble() / (1000 * 60)
-        return dist / duration
+    private fun s(dir: Double, magnetic: Boolean, fromNotation: Boolean): String {
+        var calcDir = dir
+        if (magnetic) {
+            val geomagneticField = GeomagneticField(secondLocation.latitude.toFloat(), secondLocation.longitude.toFloat(), secondLocation.altitude.toFloat(), secondTime)
+            Log.d(TAG, "Declination is: " + geomagneticField.declination)
+            calcDir += geomagneticField.declination
+        }
+        if (fromNotation) calcDir = calcDir - 180
+        if (calcDir < 0) calcDir = 360 + calcDir
+        return String.format("%d", calcDir.toInt()) + if (magnetic) " M" else ""
+    }
+
+    private fun getSpeedString(firstTime: Long, secondTime: Long, dist: Double, units: String = "m_per_min"): String {
+        val speed = getSpeed(dist, firstTime, secondTime, units)
+        if (units == "m_per_sec") {
+            return String.format("%.1f", speed) + " m/sec"
+        } else if (units == "knots") {
+            return String.format("%.2f", speed) + " kts"
+        } else {
+            return String.format("%.1f", speed) + " m/min"
+        }
+    }
+
+    private fun getSpeed(dist: Double, firstTime: Long, secondTime: Long, units: String = "m_per_min"): Any {
+        if (units == "m_per_sec") {
+            val duration = (secondTime - firstTime).toDouble() / (1000)
+            return dist / duration
+        } else if (units == "knots") {
+            val duration = (secondTime - firstTime).toDouble() / (1000 * 3600)
+            return (dist * 0.000539957) / duration
+        } else {
+            val duration = (secondTime - firstTime).toDouble() / (1000 * 60)
+            return dist / duration
+        }
     }
 
     override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<String>, grantResults: IntArray
+            requestCode: Int,
+            permissions: Array<String>, grantResults: IntArray
     ) {
         when (requestCode) {
             MY_PERMISSIONS_REQUEST -> {
@@ -204,7 +262,7 @@ class MainActivity : AppCompatActivity() {
                     alertDialog.setTitle("Permissions")
                     alertDialog.setMessage("Location permission are required for this app to work.")
                     alertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "OK",
-                        { dialog, which -> this.finish() })
+                            { dialog, which -> this.finish() })
                     alertDialog.show()
                 }
                 return
@@ -230,11 +288,11 @@ class MainActivity : AppCompatActivity() {
      */
     fun getDistance(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
         val line = geod.InverseLine(
-            lat1,
-            lon1,
-            lat2,
-            lon2,
-            GeodesicMask.DISTANCE_IN or GeodesicMask.LATITUDE or GeodesicMask.LONGITUDE
+                lat1,
+                lon1,
+                lat2,
+                lon2,
+                GeodesicMask.DISTANCE_IN or GeodesicMask.LATITUDE or GeodesicMask.LONGITUDE
         )
         return line.Distance()
     }
@@ -249,11 +307,11 @@ class MainActivity : AppCompatActivity() {
      */
     fun getDirection(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
         val line = geod.InverseLine(
-            lat1,
-            lon1,
-            lat2,
-            lon2,
-            GeodesicMask.DISTANCE_IN or GeodesicMask.LATITUDE or GeodesicMask.LONGITUDE
+                lat1,
+                lon1,
+                lat2,
+                lon2,
+                GeodesicMask.DISTANCE_IN or GeodesicMask.LATITUDE or GeodesicMask.LONGITUDE
         )
         return line.Azimuth()
     }
@@ -263,6 +321,7 @@ class MainActivity : AppCompatActivity() {
         super.onPause()
         stopLocationUpdates()
     }
+
     override fun onResume() {
         super.onResume()
         startLocationUpdates()
@@ -279,12 +338,12 @@ class MainActivity : AppCompatActivity() {
         locationRequest!!.setFastestInterval(FASTEST_INTERVAL)
 
         if (ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED
+                        this,
+                        Manifest.permission.ACCESS_FINE_LOCATION
+                ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                        this,
+                        Manifest.permission.ACCESS_COARSE_LOCATION
+                ) != PackageManager.PERMISSION_GRANTED
         ) {
             Toast.makeText(this, "You need to enable permissions to display location !", Toast.LENGTH_SHORT).show()
         }
@@ -293,7 +352,7 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-    private fun timeStamptoDateString(timestamp: Long): String{
+    private fun timeStamptoDateString(timestamp: Long): String {
         val date = LocalDateTime.ofInstant(ofEpochMilli(timestamp), systemDefault())
         val formatter = DateTimeFormatter.ofPattern("(dd)HH:mm:ss")
         return date.format(formatter)
