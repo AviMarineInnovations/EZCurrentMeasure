@@ -34,7 +34,6 @@ import java.time.format.DateTimeFormatter
 
 class MainActivity : AppCompatActivity() {
     private lateinit var tv_last_acc: TextView
-    private lateinit var tv_dist: TextView
     private lateinit var button: Button
     private lateinit var tv_speed: TextView
     private lateinit var tv_time2: TextView
@@ -82,7 +81,6 @@ class MainActivity : AppCompatActivity() {
         tv_time2 = findViewById(R.id.text_time2) as TextView
         tv_speed = findViewById(R.id.text_speed) as TextView
         tv_dir = findViewById(R.id.text_dir) as TextView
-        tv_dist = findViewById(R.id.text_dist) as TextView
         button = findViewById(R.id.start_btn) as Button
 
         if (!isLocationPermissionGranted())
@@ -138,7 +136,7 @@ class MainActivity : AppCompatActivity() {
                     )
             ) {
                 // Show an explanation to the user *asynchronously* -- don't block
-                // this thread waiting for the user's response! After the user
+                // this thread waiting for the user'getDirString response! After the user
                 // sees the explanation, try again to request the permission.
             } else {
                 ActivityCompat.requestPermissions(
@@ -181,7 +179,6 @@ class MainActivity : AppCompatActivity() {
                                 locationIntoTextViews(location, text_lat2, text_lon2, text_time2, null, true)
                                 tv_speed.text = "?"
                                 tv_dir.text = "?"
-                                tv_dist.text = "?"
                                 button.text = "Stop"
                                 button.setBackgroundColor(Color.RED)
 
@@ -199,8 +196,7 @@ class MainActivity : AppCompatActivity() {
                                 )
                                 tv_speed.text = getSpeedString(firstTime, secondTime, dist, speedUnit)
 
-                                tv_dir.text = s(dir, magnetic,from_notation)
-                                tv_dist.text = String.format("%d meters", dist.toInt())
+                                tv_dir.text = getDirString(dir, magnetic,from_notation, secondLocation,secondTime)
                                 firstTime = 0
                                 secondTime = 0
                                 button.text = "Start"
@@ -211,41 +207,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun s(dir: Double, magnetic: Boolean, fromNotation: Boolean): String {
-        var calcDir = dir
-        if (magnetic) {
-            val geomagneticField = GeomagneticField(secondLocation.latitude.toFloat(), secondLocation.longitude.toFloat(), secondLocation.altitude.toFloat(), secondTime)
-            Log.d(TAG, "Declination is: " + geomagneticField.declination)
-            calcDir += geomagneticField.declination
-        }
-        if (fromNotation) calcDir = calcDir - 180
-        if (calcDir < 0) calcDir = 360 + calcDir
-        return String.format("%d", calcDir.toInt()) + if (magnetic) " M" else ""
-    }
 
-    private fun getSpeedString(firstTime: Long, secondTime: Long, dist: Double, units: String = "m_per_min"): String {
-        val speed = getSpeed(dist, firstTime, secondTime, units)
-        if (units == "m_per_sec") {
-            return String.format("%.1f", speed) + " m/sec"
-        } else if (units == "knots") {
-            return String.format("%.2f", speed) + " kts"
-        } else {
-            return String.format("%.1f", speed) + " m/min"
-        }
-    }
-
-    private fun getSpeed(dist: Double, firstTime: Long, secondTime: Long, units: String = "m_per_min"): Any {
-        if (units == "m_per_sec") {
-            val duration = (secondTime - firstTime).toDouble() / (1000)
-            return dist / duration
-        } else if (units == "knots") {
-            val duration = (secondTime - firstTime).toDouble() / (1000 * 3600)
-            return (dist * 0.000539957) / duration
-        } else {
-            val duration = (secondTime - firstTime).toDouble() / (1000 * 60)
-            return dist / duration
-        }
-    }
 
     override fun onRequestPermissionsResult(
             requestCode: Int,
@@ -280,10 +242,10 @@ class MainActivity : AppCompatActivity() {
 
     /**
      * Get the distance between two points in meters.
-     * @param lat1 First point's latitude
-     * @param lon1 First point's longitude
-     * @param lat2 Second point's latitude
-     * @param lon2 Second point's longitude
+     * @param lat1 First point'getDirString latitude
+     * @param lon1 First point'getDirString longitude
+     * @param lat2 Second point'getDirString latitude
+     * @param lon2 Second point'getDirString longitude
      * @return Distance between the first and the second point in meters
      */
     fun getDistance(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
@@ -299,10 +261,10 @@ class MainActivity : AppCompatActivity() {
 
     /**
      * Get the distance between two points in meters.
-     * @param lat1 First point's latitude
-     * @param lon1 First point's longitude
-     * @param lat2 Second point's latitude
-     * @param lon2 Second point's longitude
+     * @param lat1 First point'getDirString latitude
+     * @param lon1 First point'getDirString longitude
+     * @param lat2 Second point'getDirString latitude
+     * @param lon2 Second point'getDirString longitude
      * @return Distance between the first and the second point in meters
      */
     fun getDirection(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {

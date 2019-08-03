@@ -120,14 +120,6 @@
           android:layout_marginTop="24dp" app:layout_constraintTop_toTopOf="parent" android:textSize="18sp"
           android:textStyle="bold"/>
   <TextView
-          android:text="Last Measurment"
-          android:layout_width="wrap_content"
-          android:layout_height="wrap_content"
-          android:id="@+id/text_last_meas_label" app:layout_constraintStart_toStartOf="parent"
-          android:layout_marginStart="16dp"
-          android:layout_marginTop="32dp" android:textSize="18sp"
-          android:textStyle="bold" app:layout_constraintTop_toBottomOf="@+id/text_time_label"/>
-  <TextView
           android:text="Latitude: "
           android:layout_width="wrap_content"
           android:layout_height="wrap_content"
@@ -136,40 +128,36 @@
           android:layout_marginTop="8dp" android:textStyle="bold"/>
 
   <TextView
-          android:text="1st Location: "
-          android:layout_width="wrap_content"
-          android:layout_height="wrap_content"
-          android:id="@+id/text_first_loc_label" app:layout_constraintStart_toStartOf="parent"
-          android:layout_marginStart="16dp"
-          android:textStyle="bold" android:layout_marginTop="8dp"
-          app:layout_constraintTop_toBottomOf="@+id/text_dist_label" android:textSize="16sp"/>
+    android:id="@+id/text_first_loc_label"
+    android:textStyle="bold"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="8dp"
+    android:layout_marginStart="16dp"
+    android:text="1st Location: "
+    android:textSize="16sp"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintTop_toBottomOf="@+id/divider5"/>
   <TextView
-          android:text="Direction: "
-          android:layout_width="wrap_content"
-          android:layout_height="wrap_content"
-          android:id="@+id/text_dir_label"
-          android:layout_marginStart="110dp"
-          android:textStyle="bold"
-          app:layout_constraintStart_toEndOf="@+id/text_speed_label"
-          app:layout_constraintTop_toTopOf="@+id/text_speed_label"
-          app:layout_constraintBottom_toBottomOf="@+id/text_speed_label"/>
+    android:id="@+id/text_dir_label"
+    android:textStyle="bold"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_marginStart="8dp"
+    android:text="Direction: "
+    app:layout_constraintBottom_toBottomOf="@+id/text_speed_label"
+    app:layout_constraintStart_toEndOf="@+id/divider6"
+    app:layout_constraintTop_toTopOf="@+id/text_speed_label"/>
   <TextView
-          android:text="Distance:"
-          android:layout_width="wrap_content"
-          android:layout_height="wrap_content"
-          android:id="@+id/text_dist_label"
-          android:textStyle="bold"
-          android:layout_marginStart="16dp"
-          app:layout_constraintStart_toStartOf="parent"
-          app:layout_constraintTop_toBottomOf="@+id/text_speed_label" android:layout_marginTop="8dp"/>
-  <TextView
-          android:text="Speed: "
-          android:layout_width="wrap_content"
-          android:layout_height="wrap_content"
-          android:id="@+id/text_speed_label" app:layout_constraintStart_toStartOf="parent"
-          android:layout_marginStart="16dp"
-          android:textStyle="bold" android:layout_marginTop="8dp"
-          app:layout_constraintTop_toBottomOf="@+id/text_last_meas_label"/>
+    android:id="@+id/text_speed_label"
+    android:textStyle="bold"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="8dp"
+    android:layout_marginStart="16dp"
+    android:text="Speed: "
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintTop_toBottomOf="@+id/divider4"/>
   <TextView
           android:text="?"
           android:layout_width="wrap_content"
@@ -236,29 +224,25 @@
           android:onClick="startButtonClick" android:layout_marginTop="8dp"
           app:layout_constraintTop_toBottomOf="@+id/text_time2_label"/>
   <TextView
-          android:text="?"
-          android:layout_width="wrap_content"
-          android:layout_height="wrap_content"
-          android:id="@+id/text_dir" app:layout_constraintStart_toEndOf="@+id/text_dir_label"
-          android:layout_marginStart="2dp"
-          app:layout_constraintTop_toTopOf="@+id/text_dir_label"
-          app:layout_constraintBottom_toBottomOf="@+id/text_dir_label"/>
+    android:id="@+id/text_dir"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="8dp"
+    android:layout_marginStart="8dp"
+    android:text="?"
+    android:textSize="30sp"
+    app:layout_constraintStart_toEndOf="@+id/divider6"
+    app:layout_constraintTop_toBottomOf="@+id/text_dir_label"/>
   <TextView
-          android:text="?"
-          android:layout_width="wrap_content"
-          android:layout_height="wrap_content"
-          android:id="@+id/text_speed"
-          app:layout_constraintTop_toTopOf="@+id/text_speed_label"
-          app:layout_constraintBottom_toBottomOf="@+id/text_speed_label"
-          app:layout_constraintStart_toEndOf="@+id/text_speed_label" android:layout_marginStart="2dp"/>
-  <TextView
-          android:text="?"
-          android:layout_width="wrap_content"
-          android:layout_height="wrap_content"
-          android:id="@+id/text_dist"
-          app:layout_constraintTop_toTopOf="@+id/text_dist_label"
-          app:layout_constraintBottom_toBottomOf="@+id/text_dist_label"
-          app:layout_constraintStart_toEndOf="@+id/text_dist_label" android:layout_marginStart="2dp"/>
+    android:id="@+id/text_speed"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="8dp"
+    android:layout_marginStart="16dp"
+    android:text="?"
+    android:textSize="30sp"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintTop_toBottomOf="@+id/text_speed_label"/>
   <TextView
           android:text="?"
           android:layout_width="wrap_content"
@@ -274,6 +258,38 @@
           android:id="@+id/textView3" android:layout_marginTop="8dp"
           app:layout_constraintTop_toBottomOf="@+id/start_btn" app:layout_constraintStart_toStartOf="parent"
           android:layout_marginStart="8dp" app:layout_constraintEnd_toEndOf="parent" android:layout_marginEnd="8dp"/>
+  <View
+    android:id="@+id/divider4"
+    android:layout_width="395dp"
+    android:layout_height="1dp"
+    android:layout_marginTop="8dp"
+    android:layout_marginStart="8dp"
+    android:layout_marginEnd="8dp"
+    android:background="?android:attr/listDivider"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintTop_toBottomOf="@+id/text_time_label2"/>
+  <View
+    android:id="@+id/divider5"
+    android:layout_width="395dp"
+    android:layout_height="1dp"
+    android:layout_marginTop="8dp"
+    android:layout_marginStart="8dp"
+    android:layout_marginEnd="8dp"
+    android:background="?android:attr/listDivider"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintTop_toBottomOf="@+id/text_dir"/>
+  <View
+    android:id="@+id/divider6"
+    android:layout_width="1dp"
+    android:layout_height="0dp"
+    android:background="?android:attr/listDivider"
+    app:layout_constraintBottom_toTopOf="@+id/divider5"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintHorizontal_bias="0.64"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintTop_toBottomOf="@+id/divider4"/>
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>
