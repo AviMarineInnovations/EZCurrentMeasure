@@ -5,10 +5,8 @@ import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
-import android.hardware.GeomagneticField
 import android.location.Location
 import android.os.Bundle
-import android.util.Log
 import android.view.KeyEvent
 import android.view.KeyEvent.KEYCODE_VOLUME_DOWN
 import android.view.Menu
@@ -24,12 +22,6 @@ import androidx.core.content.ContextCompat
 import androidx.preference.PreferenceManager
 import com.google.android.gms.location.*
 import kotlinx.android.synthetic.main.activity_main.*
-import net.sf.geographiclib.Geodesic
-import net.sf.geographiclib.GeodesicMask
-import java.time.Instant.ofEpochMilli
-import java.time.LocalDateTime
-import java.time.ZoneId.systemDefault
-import java.time.format.DateTimeFormatter
 
 
 class MainActivity : AppCompatActivity() {
@@ -98,6 +90,7 @@ class MainActivity : AppCompatActivity() {
         }
         startLocationUpdates()
     }
+
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.main_menu, menu)
         return true
@@ -113,7 +106,14 @@ class MainActivity : AppCompatActivity() {
         return super.onOptionsItemSelected(item)
     }
 
-    private fun locationIntoTextViews(loc: Location, lat_tv: TextView, lon_tv: TextView, time_tv: TextView, acc_tv: TextView? = null, empty: Boolean = false) {
+    private fun locationIntoTextViews(
+        loc: Location,
+        lat_tv: TextView,
+        lon_tv: TextView,
+        time_tv: TextView,
+        acc_tv: TextView? = null,
+        empty: Boolean = false
+    ) {
         if (empty) {
             lat_tv.text = "?"
             lon_tv.text = "?"
@@ -132,23 +132,23 @@ class MainActivity : AppCompatActivity() {
     private fun askForPermissions() {
         if (!isLocationPermissionGranted()) {
             if (ActivityCompat.shouldShowRequestPermissionRationale(
-                            this, Manifest.permission.ACCESS_FINE_LOCATION
-                    )
+                    this, Manifest.permission.ACCESS_FINE_LOCATION
+                )
             ) {
                 // Show an explanation to the user *asynchronously* -- don't block
                 // this thread waiting for the user'getDirString response! After the user
                 // sees the explanation, try again to request the permission.
             } else {
                 ActivityCompat.requestPermissions(
-                        this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), MY_PERMISSIONS_REQUEST
+                    this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), MY_PERMISSIONS_REQUEST
                 )
             }
         }
     }
 
     private fun isLocationPermissionGranted() =
-            (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-                    == PackageManager.PERMISSION_GRANTED)
+        (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED)
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
         if (keyCode == KEYCODE_VOLUME_DOWN) {
@@ -164,54 +164,51 @@ class MainActivity : AppCompatActivity() {
         val magnetic = sharedPreferences.getBoolean("magnetic", false)
         val from_notation = sharedPreferences.getBoolean("from_notation", false)
         val speedUnit = sharedPreferences.getString("speed_unit", "m_per_min")
-
-
         if (!isLocationPermissionGranted())
             askForPermissions()
         else {
             fusedLocationClient.lastLocation //TODO check why I can do that (location can be null)
-                    .addOnSuccessListener { location: Location ->
-                        if (location != null) {
-                            if (firstTime == 0L) {
-                                firstLocation = location
-                                firstTime = System.currentTimeMillis()
-                                locationIntoTextViews(location, text_lat1, text_lon1, text_time1, null)
-                                locationIntoTextViews(location, text_lat2, text_lon2, text_time2, null, true)
-                                tv_speed.text = "?"
-                                tv_dir.text = "?"
-                                button.text = "Stop"
-                                button.setBackgroundColor(Color.RED)
+                .addOnSuccessListener { location: Location ->
+                    if (location != null) {
+                        if (firstTime == 0L) {
+                            firstLocation = location
+                            firstTime = System.currentTimeMillis()
+                            locationIntoTextViews(location, text_lat1, text_lon1, text_time1, null)
+                            locationIntoTextViews(location, text_lat2, text_lon2, text_time2, null, true)
+                            tv_speed.text = "?"
+                            tv_dir.text = "?"
+                            button.text = "Stop"
+                            button.setBackgroundColor(Color.RED)
 
-                            } else {
-                                secondLocation = location
-                                secondTime = System.currentTimeMillis()
-                                locationIntoTextViews(location, text_lat2, text_lon2, text_time2)
-                                val dist = getDistance(
-                                        firstLocation.latitude, firstLocation.longitude, secondLocation.latitude,
-                                        secondLocation.longitude
-                                )
-                                var dir = getDirection(
-                                        firstLocation.latitude, firstLocation.longitude, secondLocation.latitude,
-                                        secondLocation.longitude
-                                )
-                                tv_speed.text = getSpeedString(firstTime, secondTime, dist, speedUnit)
+                        } else {
+                            secondLocation = location
+                            secondTime = System.currentTimeMillis()
+                            locationIntoTextViews(location, text_lat2, text_lon2, text_time2)
+                            val dist = getDistance(
+                                firstLocation.latitude, firstLocation.longitude, secondLocation.latitude,
+                                secondLocation.longitude
+                            )
+                            var dir = getDirection(
+                                firstLocation.latitude, firstLocation.longitude, secondLocation.latitude,
+                                secondLocation.longitude
+                            )
+                            tv_speed.text = getSpeedString(firstTime, secondTime, dist, speedUnit)
 
-                                tv_dir.text = getDirString(dir, magnetic,from_notation, secondLocation,secondTime)
-                                firstTime = 0
-                                secondTime = 0
-                                button.text = "Start"
-                                button.setBackgroundColor(Color.GRAY)
-                            }
+                            tv_dir.text = getDirString(dir, magnetic, from_notation, secondLocation, secondTime)
+                            firstTime = 0
+                            secondTime = 0
+                            button.text = "Start"
+                            button.setBackgroundColor(Color.GRAY)
                         }
                     }
+                }
         }
     }
 
 
-
     override fun onRequestPermissionsResult(
-            requestCode: Int,
-            permissions: Array<String>, grantResults: IntArray
+        requestCode: Int,
+        permissions: Array<String>, grantResults: IntArray
     ) {
         when (requestCode) {
             MY_PERMISSIONS_REQUEST -> {
@@ -224,7 +221,7 @@ class MainActivity : AppCompatActivity() {
                     alertDialog.setTitle("Permissions")
                     alertDialog.setMessage("Location permission are required for this app to work.")
                     alertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "OK",
-                            { dialog, which -> this.finish() })
+                        { dialog, which -> this.finish() })
                     alertDialog.show()
                 }
                 return
@@ -237,47 +234,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-
-    private val geod = Geodesic.WGS84// This matches EPSG4326, which is the coordinate system used by Geolake
-
-    /**
-     * Get the distance between two points in meters.
-     * @param lat1 First point'getDirString latitude
-     * @param lon1 First point'getDirString longitude
-     * @param lat2 Second point'getDirString latitude
-     * @param lon2 Second point'getDirString longitude
-     * @return Distance between the first and the second point in meters
-     */
-    fun getDistance(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
-        val line = geod.InverseLine(
-                lat1,
-                lon1,
-                lat2,
-                lon2,
-                GeodesicMask.DISTANCE_IN or GeodesicMask.LATITUDE or GeodesicMask.LONGITUDE
-        )
-        return line.Distance()
-    }
-
-    /**
-     * Get the distance between two points in meters.
-     * @param lat1 First point'getDirString latitude
-     * @param lon1 First point'getDirString longitude
-     * @param lat2 Second point'getDirString latitude
-     * @param lon2 Second point'getDirString longitude
-     * @return Distance between the first and the second point in meters
-     */
-    fun getDirection(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
-        val line = geod.InverseLine(
-                lat1,
-                lon1,
-                lat2,
-                lon2,
-                GeodesicMask.DISTANCE_IN or GeodesicMask.LATITUDE or GeodesicMask.LONGITUDE
-        )
-        return line.Azimuth()
-    }
-
 
     override fun onPause() {
         super.onPause()
@@ -300,24 +256,17 @@ class MainActivity : AppCompatActivity() {
         locationRequest!!.setFastestInterval(FASTEST_INTERVAL)
 
         if (ActivityCompat.checkSelfPermission(
-                        this,
-                        Manifest.permission.ACCESS_FINE_LOCATION
-                ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
-                        this,
-                        Manifest.permission.ACCESS_COARSE_LOCATION
-                ) != PackageManager.PERMISSION_GRANTED
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
         ) {
             Toast.makeText(this, "You need to enable permissions to display location !", Toast.LENGTH_SHORT).show()
         }
 
         fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, null)
-    }
-
-
-    private fun timeStamptoDateString(timestamp: Long): String {
-        val date = LocalDateTime.ofInstant(ofEpochMilli(timestamp), systemDefault())
-        val formatter = DateTimeFormatter.ofPattern("(dd)HH:mm:ss")
-        return date.format(formatter)
     }
 
 }
