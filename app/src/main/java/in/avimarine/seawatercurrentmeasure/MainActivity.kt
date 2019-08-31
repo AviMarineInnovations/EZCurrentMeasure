@@ -4,7 +4,6 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.Color
 import android.location.Location
 import android.os.Bundle
 import android.view.KeyEvent
@@ -25,6 +24,7 @@ import kotlinx.android.synthetic.main.activity_main.*
 
 
 class MainActivity : AppCompatActivity() {
+    private lateinit var countUpTimer: CountUpTimer
     private lateinit var tv_last_acc: TextView
     private lateinit var button: Button
     private lateinit var tv_speed: TextView
@@ -177,8 +177,8 @@ class MainActivity : AppCompatActivity() {
                             locationIntoTextViews(location, text_lat2, text_lon2, text_time2, null, true)
                             tv_speed.text = "?"
                             tv_dir.text = "?"
-                            button.text = "Stop"
-                            button.setBackgroundColor(Color.RED)
+                            countUpTimer = CountUpButtonTimer(1000).start()
+
 
                         } else {
                             secondLocation = location
@@ -197,13 +197,27 @@ class MainActivity : AppCompatActivity() {
                             tv_dir.text = getDirString(dir, magnetic, from_notation, secondLocation, secondTime)
                             firstTime = 0
                             secondTime = 0
-                            button.text = "Start"
-                            button.setBackgroundColor(Color.GRAY)
+                            countUpTimer.stop()
+                            formatButton(ButtonState.STOPPED,0)
                         }
                     }
                 }
         }
     }
+
+    private fun formatButton(buttonState: ButtonState, time: Long) {
+        if (buttonState == ButtonState.RUNNING){
+            button.setBackgroundResource(R.drawable.btn_rnd_red)
+            button.setText("Stop\n" + getTimerString(time))
+        }
+        else if (buttonState == ButtonState.STOPPED){
+            button.setBackgroundResource(R.drawable.btn_rnd_grn)
+            button.setText("Start")
+        }
+
+    }
+
+
 
 
     override fun onRequestPermissionsResult(
@@ -268,6 +282,13 @@ class MainActivity : AppCompatActivity() {
 
         fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, null)
     }
+    inner class CountUpButtonTimer(interval: Long): CountUpTimer(interval) {
+        override fun onTick(elapsedTime: Long) {
+            formatButton(ButtonState.RUNNING, System.currentTimeMillis() - firstTime);
+        }
+    }
 
 }
+
+
 

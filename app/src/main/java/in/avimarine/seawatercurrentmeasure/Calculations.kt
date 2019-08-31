@@ -30,9 +30,13 @@ fun getDirString(dir: Double, magnetic: Boolean, fromNotation: Boolean, location
         Log.d(TAG, "Declination is: " + geomagneticField.declination)
         calcDir += geomagneticField.declination
     }
-    if (fromNotation) calcDir = calcDir - 180
-    if (calcDir < 0) calcDir = 360 + calcDir
-    return String.format("%03d", calcDir.toInt()) + if (magnetic) " M" else ""
+    if (fromNotation) {
+        calcDir -= 180
+    }
+    if (calcDir < 0) {
+        calcDir += 360
+    }
+    return String.format("%03d", Math.round(calcDir)) + if (magnetic) " M" else ""
 }
 
 fun getSpeedString(firstTime: Long, secondTime: Long, dist: Double, units: String = "m_per_min"): String {
@@ -53,6 +57,13 @@ fun getSpeedString(firstTime: Long, secondTime: Long, dist: Double, units: Strin
     } else {
         return (if (speed < 10) String.format("%.1f", speed) else String.format("%.0f", speed)) + " m/min"
     }
+}
+
+fun getTimerString(milliseconds: Long): String {
+    val hours = milliseconds / 1000 / 3600
+    val minutes = (milliseconds / 1000 / 60) % 60
+    val seconds = milliseconds / 1000 % 60
+    return String.format("%02d:%02d:%02d", hours,minutes,seconds)
 }
 
 fun toKnots(speed: Double): Double {
