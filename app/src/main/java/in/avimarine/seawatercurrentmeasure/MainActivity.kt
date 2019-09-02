@@ -162,13 +162,13 @@ class MainActivity : AppCompatActivity() {
     fun startButtonClick(view: View) {
         val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this /* Activity context */)
         val magnetic = sharedPreferences.getBoolean("magnetic", false)
-        val from_notation = sharedPreferences.getBoolean("from_notation", false)
+        val fromNotation = sharedPreferences.getBoolean("from_notation", false)
         val speedUnit = sharedPreferences.getString("speed_unit", "m_per_min")
         if (!isLocationPermissionGranted())
             askForPermissions()
         else {
             fusedLocationClient.lastLocation //TODO check why I can do that (location can be null)
-                .addOnSuccessListener { location: Location ->
+                .addOnSuccessListener { location: Location? ->
                     if (location != null) {
                         if (firstTime == 0L) {
                             firstLocation = location
@@ -194,7 +194,7 @@ class MainActivity : AppCompatActivity() {
                             )
                             tv_speed.text = getSpeedString(firstTime, secondTime, dist, speedUnit)
 
-                            tv_dir.text = getDirString(dir, magnetic, from_notation, secondLocation, secondTime)
+                            tv_dir.text = getDirString(dir, magnetic, fromNotation, secondLocation, secondTime)
                             firstTime = 0
                             secondTime = 0
                             countUpTimer.stop()
