@@ -1,14 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-  <string-array name="speed">
-    <item>Metres per minute</item>
-    <item>Metres per second</item>
-    <item>Knots</item>
-  </string-array>
-  <string-array name="speedAlias">
-    <item>m_per_min</item>
-    <item>m_per_sec</item>
-    <item>knots</item>
-
-  </string-array>
+    <string-array name="speed">
+        <item>Metres per minute</item>
+        <item>Metres per second</item>
+        <item>Knots</item>
+    </string-array>
+    <string-array name="speed_alias">
+        <item>m_per_min</item>
+        <item>m_per_sec</item>
+        <item>knots</item>
+    </string-array>
+    <string-array name="delayed_start">
+        <item>Off</item>
+        <item>5 Seconds</item>
+        <item>10 Seconds</item>
+        <item>30 Seconds</item>
+        <item>60 Seconds</item>
+    </string-array>
+    <string-array name="delayed_start_alias">
+        <item>0</item>
+        <item>5</item>
+        <item>10</item>
+        <item>30</item>
+        <item>60</item>
+    </string-array>
+    <string-array name="auto_finish">
+        <item>Off</item>
+        <item>30 Seconds</item>
+        <item>60 Seconds</item>
+        <item>120 Seconds</item>
+        <item>5 minutes</item>
+        <item>10 minutes</item>
+    </string-array>
+    <string-array name="auto_finish_alias">
+        <item>0</item>
+        <item>30</item>
+        <item>60</item>
+        <item>120</item>
+        <item>300</item>
+        <item>600</item>
+    </string-array>
 </resources>

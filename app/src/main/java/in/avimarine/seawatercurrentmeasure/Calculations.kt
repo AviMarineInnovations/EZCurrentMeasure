@@ -107,6 +107,10 @@ fun getDistance(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double 
     return line.Distance()
 }
 
+fun getDistance(firstLocation : Location, secondLocation: Location): Double {
+    return getDistance(firstLocation.latitude, firstLocation.longitude, secondLocation.latitude, secondLocation.longitude)
+}
+
 /**
  * Get the azimuth between two points in degrees.
  * @param lat1 First point'getDirString latitude
@@ -124,6 +128,9 @@ fun getDirection(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double
         GeodesicMask.DISTANCE_IN or GeodesicMask.LATITUDE or GeodesicMask.LONGITUDE
     )
     return line.Azimuth()
+}
+fun getDirection(firstLocation: Location, secondLocation: Location): Double {
+    return getDirection(firstLocation.latitude,firstLocation.longitude,secondLocation.latitude,secondLocation.longitude)
 }
 
 fun timeStamptoDateString(timestamp: Long): String {

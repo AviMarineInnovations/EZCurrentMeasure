@@ -1,17 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
-  xmlns:android="http://schemas.android.com/apk/res/android">
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto">
     <ListPreference
-      app:key="speed_unit"
-      app:title="Speed Units"
-      app:entries="@array/speed"
-      app:entryValues="@array/speedAlias"/>
+            app:entries="@array/speed"
+            app:entryValues="@array/speed_alias"
+            app:key="speed_unit"
+            app:title="Speed Units" />
     <SwitchPreference
-      android:key="magnetic"
-      android:title="Use Magnetic Direction"
-      />
+            android:key="magnetic"
+            android:title="Use Magnetic Direction" />
     <SwitchPreference
-      android:key="from_notation"
-      android:title="Use Wind Notation (Current direction from origin)"
-      />
+            android:key="from_notation"
+            android:title="Use Wind Notation (Current direction from origin)" />
+    <ListPreference
+            app:entries="@array/delayed_start"
+            app:entryValues="@array/delayed_start_alias"
+            app:key="delayed_start"
+            app:title="Delayed Start" />
+<!--    <ListPreference-->
+<!--            app:entries="@array/auto_finish"-->
+<!--            app:entryValues="@array/auto_finish_alias"-->
+<!--            app:key="auto_finish_time"-->
+<!--            app:title="Automatic Finish" />-->
 </PreferenceScreen>

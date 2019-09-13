@@ -6,13 +6,12 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Location
 import android.os.Bundle
+import android.os.CountDownTimer
 import android.view.KeyEvent
 import android.view.KeyEvent.KEYCODE_VOLUME_DOWN
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
-import android.widget.Button
-import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -24,56 +23,33 @@ import kotlinx.android.synthetic.main.activity_main.*
 
 
 class MainActivity : AppCompatActivity() {
+
     private lateinit var countUpTimer: CountUpTimer
-    private lateinit var tv_last_acc: TextView
-    private lateinit var button: Button
-    private lateinit var tv_speed: TextView
-    private lateinit var tv_time2: TextView
-    private lateinit var tv_lon2: TextView
-    private lateinit var tv_lat2: TextView
-    private lateinit var tv_time1: TextView
-    private lateinit var tv_lon1: TextView
-    private lateinit var tv_lat1: TextView
-    private lateinit var tv_last_time: TextView
-    private lateinit var tv_last_lon: TextView
-    private lateinit var tv_dir: TextView
-    private lateinit var tv_last_lat: TextView
+    private lateinit var countDownTimer: CountDownTimer
     private var lastLocationTime: Long = 0
     private var lastLocation: Location? = null
     private var firstTime: Long = 0
     private var secondTime: Long = 0
+    private var delayedStartTime: Long = 0
     private lateinit var firstLocation: Location
     private lateinit var secondLocation: Location
     private val MY_PERMISSIONS_REQUEST: Int = 12345
     private var locationRequest: LocationRequest? = null
     private val UPDATE_INTERVAL: Long = 1000
     private val FASTEST_INTERVAL: Long = 1000 // = 5 seconds
-
-
+    private var measurementState: MeasurementState = MeasurementState.STOPPED
+    private var delayedStartInterval: Long = 0
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationCallback: LocationCallback
     val Any.TAG: String
         get() {
             return javaClass.simpleName
         }
 
-    private lateinit var fusedLocationClient: FusedLocationProviderClient
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
-        tv_last_lat = findViewById(R.id.text_last_lat) as TextView
-        tv_last_lon = findViewById(R.id.text_last_lon) as TextView
-        tv_last_time = findViewById(R.id.text_last_time) as TextView
-        tv_last_acc = findViewById(R.id.text_last_acc) as TextView
-        tv_lat1 = findViewById(R.id.text_lat1) as TextView
-        tv_lon1 = findViewById(R.id.text_lon1) as TextView
-        tv_time1 = findViewById(R.id.text_time1) as TextView
-        tv_lat2 = findViewById(R.id.text_lat2) as TextView
-        tv_lon2 = findViewById(R.id.text_lon2) as TextView
-        tv_time2 = findViewById(R.id.text_time2) as TextView
-        tv_speed = findViewById(R.id.text_speed) as TextView
-        tv_dir = findViewById(R.id.text_dir) as TextView
-        button = findViewById(R.id.start_btn) as Button
 
         if (!isLocationPermissionGranted())
             askForPermissions()
@@ -84,7 +60,13 @@ class MainActivity : AppCompatActivity() {
                 for (location in locationResult.locations) {
                     lastLocation = location
                     lastLocationTime = location.time
-                    locationIntoTextViews(location, tv_last_lat, tv_last_lon, tv_last_time, tv_last_acc)
+                    locationIntoTextViews(
+                        location,
+                        text_last_lat,
+                        text_last_lon,
+                        text_last_time,
+                        text_last_acc
+                    )
                 }
             }
         }
@@ -106,28 +88,7 @@ class MainActivity : AppCompatActivity() {
         return super.onOptionsItemSelected(item)
     }
 
-    private fun locationIntoTextViews(
-        loc: Location,
-        lat_tv: TextView,
-        lon_tv: TextView,
-        time_tv: TextView,
-        acc_tv: TextView? = null,
-        empty: Boolean = false
-    ) {
-        if (empty) {
-            lat_tv.text = "?"
-            lon_tv.text = "?"
-            time_tv.text = "?"
-            if (acc_tv != null)
-                acc_tv.text = "?"
-        } else {
-            lat_tv.text = String.format("%.6f", loc.latitude)
-            lon_tv.text = String.format("%.6f", loc.longitude)
-            time_tv.text = timeStamptoDateString(loc.time)
-            if (acc_tv != null)
-                acc_tv.text = String.format("%.1f m", loc.accuracy)
-        }
-    }
+
 
     private fun askForPermissions() {
         if (!isLocationPermissionGranted()) {
@@ -160,65 +121,105 @@ class MainActivity : AppCompatActivity() {
 
     @SuppressLint("MissingPermission")
     fun startButtonClick(view: View) {
-        val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this /* Activity context */)
-        val magnetic = sharedPreferences.getBoolean("magnetic", false)
-        val fromNotation = sharedPreferences.getBoolean("from_notation", false)
-        val speedUnit = sharedPreferences.getString("speed_unit", "m_per_min")
+        val (magnetic, fromNotation, speedUnit) = getPreferences()
         if (!isLocationPermissionGranted())
             askForPermissions()
         else {
-            fusedLocationClient.lastLocation //TODO check why I can do that (location can be null)
+            if (delayedStartInterval > 0 && firstTime == 0L) {
+                delayedStartTime = System.currentTimeMillis()
+                measurementState = MeasurementState.DELAYED_START
+                if (::countDownTimer.isInitialized) {
+                    countDownTimer.cancel();
+                }
+                countDownTimer = CountDownButtonTimer(delayedStartInterval, 1000).start()
+                return;
+            }
+            fusedLocationClient.lastLocation
                 .addOnSuccessListener { location: Location? ->
                     if (location != null) {
                         if (firstTime == 0L) {
-                            firstLocation = location
-                            firstTime = System.currentTimeMillis()
-                            locationIntoTextViews(location, text_lat1, text_lon1, text_time1, null)
-                            locationIntoTextViews(location, text_lat2, text_lon2, text_time2, null, true)
-                            tv_speed.text = "?"
-                            tv_dir.text = "?"
-                            countUpTimer = CountUpButtonTimer(1000).start()
-
-
+                            startMeasurement(location)
                         } else {
-                            secondLocation = location
-                            secondTime = System.currentTimeMillis()
-                            locationIntoTextViews(location, text_lat2, text_lon2, text_time2)
-                            val dist = getDistance(
-                                firstLocation.latitude, firstLocation.longitude, secondLocation.latitude,
-                                secondLocation.longitude
-                            )
-                            var dir = getDirection(
-                                firstLocation.latitude, firstLocation.longitude, secondLocation.latitude,
-                                secondLocation.longitude
-                            )
-                            tv_speed.text = getSpeedString(firstTime, secondTime, dist, speedUnit)
-
-                            tv_dir.text = getDirString(dir, magnetic, fromNotation, secondLocation, secondTime)
-                            firstTime = 0
-                            secondTime = 0
-                            countUpTimer.stop()
-                            formatButton(ButtonState.STOPPED,0)
+                            endMeasurement(location, speedUnit, magnetic, fromNotation)
                         }
                     }
                 }
         }
     }
 
-    private fun formatButton(buttonState: ButtonState, time: Long) {
-        if (buttonState == ButtonState.RUNNING){
-            button.setBackgroundResource(R.drawable.btn_rnd_red)
-            button.setText("Stop\n" + getTimerString(time))
-        }
-        else if (buttonState == ButtonState.STOPPED){
-            button.setBackgroundResource(R.drawable.btn_rnd_grn)
-            button.setText("Start")
-        }
+    private fun endMeasurement(
+        location: Location,
+        speedUnit: String,
+        magnetic: Boolean,
+        fromNotation: Boolean
+    ) {
+        secondLocation = location
+        secondTime = System.currentTimeMillis()
+        locationIntoTextViews(location, text_lat2, text_lon2, text_time2)
+        val dist = getDistance(firstLocation, secondLocation)
+        var dir = getDirection(firstLocation,secondLocation)
+        text_speed.text = getSpeedString(firstTime, secondTime, dist, speedUnit)
 
+        text_dir.text = getDirString(
+            dir,
+            magnetic,
+            fromNotation,
+            secondLocation,
+            secondTime
+        )
+        firstTime = 0
+        secondTime = 0
+        countUpTimer.stop()
+        formatButton(MeasurementState.STOPPED, 0)
     }
 
+    private fun getPreferences(): Triple<Boolean, Boolean, String> {
+        val sharedPreferences =
+            PreferenceManager.getDefaultSharedPreferences(this /* Activity context */)
+        var magnetic = false
+        var fromNotation = false
+        var speedUnit = "m_per_min"
+        if (sharedPreferences != null) {
+            magnetic = sharedPreferences.getBoolean("magnetic", false)
+            fromNotation = sharedPreferences.getBoolean("from_notation", false)
+            speedUnit = sharedPreferences.getString("speed_unit", "m_per_min")
+            delayedStartInterval = sharedPreferences.getString("delayed_start", "0").toLong() * 1000
+        }
+        return Triple(magnetic, fromNotation, speedUnit)
+    }
 
+    private fun startMeasurement(location: Location) {
+        firstLocation = location
+        firstTime = System.currentTimeMillis()
+        measurementState = MeasurementState.RUNNING
+        locationIntoTextViews(location, text_lat1, text_lon1, text_time1, null)
+        locationIntoTextViews(
+            location,
+            text_lat2,
+            text_lon2,
+            text_time2,
+            null,
+            true
+        )
+        text_speed.text = "?"
+        text_dir.text = "?"
+        if (::countDownTimer.isInitialized) {
+            countDownTimer.cancel();
+        }
+        if (::countUpTimer.isInitialized) {
+            countUpTimer.stop()
+        }
+        countUpTimer = CountUpButtonTimer(1000).start()
+    }
 
+    private fun startMeasurement() {
+        fusedLocationClient.lastLocation
+            .addOnSuccessListener { location: Location? ->
+                if (location != null) {
+                    startMeasurement(location)
+                }
+            }
+    }
 
     override fun onRequestPermissionsResult(
         requestCode: Int,
@@ -277,16 +278,50 @@ class MainActivity : AppCompatActivity() {
                 Manifest.permission.ACCESS_COARSE_LOCATION
             ) != PackageManager.PERMISSION_GRANTED
         ) {
-            Toast.makeText(this, "You need to enable permissions to display location !", Toast.LENGTH_SHORT).show()
+            Toast.makeText(
+                this,
+                "You need to enable permissions to display location !",
+                Toast.LENGTH_SHORT
+            ).show()
         }
 
         fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, null)
     }
-    inner class CountUpButtonTimer(interval: Long): CountUpTimer(interval) {
+
+    private fun formatButton(measurementState: MeasurementState, time: Long) {
+        if (measurementState == MeasurementState.RUNNING) {
+            start_btn.setBackgroundResource(R.drawable.btn_rnd_red)
+            start_btn.setText("Stop\n" + getTimerString(time))
+        } else if (measurementState == MeasurementState.STOPPED) {
+            start_btn.setBackgroundResource(R.drawable.btn_rnd_grn)
+            start_btn.setText("Start")
+        } else if (measurementState == MeasurementState.DELAYED_START) {
+            start_btn.setBackgroundResource(R.drawable.btn_rnd_ylw)
+            start_btn.setText("Start in\n" + getTimerString(time))
+        }
+
+    }
+
+    inner class CountUpButtonTimer(interval: Long) : CountUpTimer(interval) {
         override fun onTick(elapsedTime: Long) {
-            formatButton(ButtonState.RUNNING, System.currentTimeMillis() - firstTime);
+            formatButton(MeasurementState.RUNNING, System.currentTimeMillis() - firstTime);
         }
     }
+
+    inner class CountDownButtonTimer(countDownInterval: Long, interval: Long) :
+        CountDownTimer(countDownInterval, interval) {
+        override fun onFinish() {
+            startMeasurement()
+        }
+
+        override fun onTick(elapsedTime: Long) {
+            formatButton(
+                measurementState,
+                delayedStartTime + delayedStartInterval - System.currentTimeMillis()
+            );
+        }
+    }
+
 
 }
 
