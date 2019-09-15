@@ -30,3 +30,30 @@ fun locationIntoTextViews(
             acc_tv.text = String.format("%.1f m", loc.accuracy)
     }
 }
+
+fun getSpeedString(firstTime: Long, secondTime: Long, dist: Double, units: String = "m_per_min"): String {
+    val speed = getSpeed(dist, firstTime, secondTime)
+    if (speed > 3000) { //The current is over 95 kts
+        return "Error"
+    }
+    if (units == "m_per_sec") {
+        return (if (speed < 10) String.format("%.1f", toMPerSec(speed)) else String.format(
+            "%.0f",
+            toMPerSec(speed)
+        )) + " m/sec"
+    } else if (units == "knots") {
+        return (if (speed < 10) String.format("%.1f", toKnots(speed)) else String.format(
+            "%.0f",
+            toKnots(speed)
+        )) + " kts"
+    } else {
+        return (if (speed < 10) String.format("%.1f", speed) else String.format("%.0f", speed)) + " m/min"
+    }
+}
+
+fun getTimerString(milliseconds: Long): String {
+    val hours = milliseconds / 1000 / 3600
+    val minutes = (milliseconds / 1000 / 60) % 60
+    val seconds = milliseconds / 1000 % 60
+    return String.format("%02d:%02d:%02d", hours,minutes,seconds)
+}

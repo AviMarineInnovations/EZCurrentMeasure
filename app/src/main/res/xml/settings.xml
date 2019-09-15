@@ -16,10 +16,12 @@
             app:entries="@array/delayed_start"
             app:entryValues="@array/delayed_start_alias"
             app:key="delayed_start"
-            app:title="Delayed Start" />
-<!--    <ListPreference-->
-<!--            app:entries="@array/auto_finish"-->
-<!--            app:entryValues="@array/auto_finish_alias"-->
-<!--            app:key="auto_finish_time"-->
-<!--            app:title="Automatic Finish" />-->
+            app:title="Delayed Start"
+            android:defaultValue="0"/>
+    <ListPreference
+            app:entries="@array/auto_finish"
+            app:entryValues="@array/auto_finish_alias"
+            app:key="auto_finish"
+            app:title="Automatic Finish"
+            android:defaultValue="0"/>
 </PreferenceScreen>
