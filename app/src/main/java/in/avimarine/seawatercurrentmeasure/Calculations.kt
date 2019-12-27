@@ -3,6 +3,9 @@ package `in`.avimarine.seawatercurrentmeasure
 import android.hardware.GeomagneticField
 import android.location.Location
 import android.util.Log
+import com.mapbox.geojson.Point
+import com.mapbox.turf.TurfConstants
+import com.mapbox.turf.TurfMeasurement
 import net.sf.geographiclib.Geodesic
 import net.sf.geographiclib.GeodesicMask
 import java.time.Instant
@@ -112,4 +115,27 @@ fun timeStamptoDateString(timestamp: Long): String {
     val date = LocalDateTime.ofInstant(Instant.ofEpochMilli(timestamp), ZoneId.systemDefault())
     val formatter = DateTimeFormatter.ofPattern("(dd)HH:mm:ss")
     return date.format(formatter)
+}
+
+fun Location.toPoint() : Point {
+    return Point.fromLngLat(this.longitude,this.latitude)
+}
+
+/**
+ * Returns Error in degrees (total error equals +/- ret)
+ */
+fun getDirError(firstLocation: Location, secondLocation: Location, err1: Double, err2: Double): Double {
+    val ber = getDirection(firstLocation,secondLocation)
+    val tmpLocA = TurfMeasurement.destination(firstLocation.toPoint(),err1,ber-90,TurfConstants.UNIT_METERS)
+    val tmpLocB = TurfMeasurement.destination(secondLocation.toPoint(),err2,ber+90,TurfConstants.UNIT_METERS)
+    var res = TurfMeasurement.bearing(tmpLocA,tmpLocB)
+    res = (res-ber)
+    return res
+}
+
+/**
+ * Returns Error in meters (total error equals +/- ret)
+ */
+fun getDistError(err1: Double, err2: Double): Double {
+    return err1+err2
 }

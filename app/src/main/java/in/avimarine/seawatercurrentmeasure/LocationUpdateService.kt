@@ -17,17 +17,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.location.Location;
-import android.os.Binder;
-import android.os.Build;
-import android.os.Handler;
-import android.os.HandlerThread;
-import android.os.IBinder;
-import android.os.Looper;
+import android.os.*
 import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import android.util.Log;
-import androidx.core.app.NotificationManagerCompat
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
@@ -52,6 +46,11 @@ import com.google.android.gms.tasks.Task;
  * notification assocaited with that service is removed.
  */
 class LocationUpdatesService:Service() {
+
+    private var AutoFinishInterval = 0L
+    private var StartTime = 0L
+
+
     private val mBinder = LocalBinder()
     /**
      * Used to check whether the bound activity has really gone away and not unbound as part of an
@@ -87,29 +86,32 @@ class LocationUpdatesService:Service() {
     // Channel ID
     val notification:Notification
         get() {
-            val intent = Intent(this, LocationUpdatesService::class.java)
+            val stopIntent = Intent(this, LocationUpdatesService::class.java)
+            val launchIntent = Intent(this, MainActivity::class.java)
+            launchIntent.setAction(Intent.ACTION_MAIN);
+            launchIntent.addCategory(Intent.CATEGORY_LAUNCHER);
             val text = Utils.getLocationText(mLocation)
-            intent.putExtra(EXTRA_STARTED_FROM_NOTIFICATION, true)
-            val servicePendingIntent = PendingIntent.getService(this, 0, intent,
+            stopIntent.putExtra(EXTRA_STOPPED_FROM_NOTIFICATION, true)
+            val servicePendingIntent = PendingIntent.getService(this, 0, stopIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT)
             val activityPendingIntent = PendingIntent.getActivity(this, 0,
-                Intent(this, MainActivity::class.java), 0)
-            val builder = NotificationCompat.Builder(this)
+                launchIntent, 0)
+            val builder = NotificationCompat.Builder(this, CHANNEL_ID)
                 .addAction(R.drawable.ic_launch, getString(R.string.launch_activity),
                     activityPendingIntent)
                 .addAction(R.drawable.ic_cancel, getString(R.string.stop_measurement),
                     servicePendingIntent)
-                .setContentText(text)
-                .setContentTitle(Utils.getLocationTitle(this))
+//                .setContentText(text)
+                .setContentTitle(Utils.getLocationTitle(this,StartTime , AutoFinishInterval))
                 .setOngoing(true)
                 .setPriority(NotificationCompat.PRIORITY_MAX)
                 .setSmallIcon(R.mipmap.ic_launcher)
                 .setTicker(text)
                 .setWhen(System.currentTimeMillis())
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-            {
-                builder.setChannelId(CHANNEL_ID)
-            }
+//            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+//            {
+//                builder.setChannelId(CHANNEL_ID)
+//            }
             return builder.build()
         }
     override fun onCreate() {
@@ -139,11 +141,12 @@ class LocationUpdatesService:Service() {
     }
     override fun onStartCommand(intent:Intent, flags:Int, startId:Int):Int {
         Log.i(TAG, "Service started")
-        val startedFromNotification = intent.getBooleanExtra(EXTRA_STARTED_FROM_NOTIFICATION,
+        val stoppedFromNotification = intent.getBooleanExtra(EXTRA_STOPPED_FROM_NOTIFICATION,
             false)
-        // We got here because the user decided to remove location updates from the notification.
-        if (startedFromNotification)
+        // We got here because the user decided to quit the measurement from the notification.
+        if (stoppedFromNotification)
         {
+            Log.d(TAG,"Stopped from notification")
             stopMeasurement()
             removeLocationUpdates()
             stopSelf()
@@ -188,7 +191,9 @@ class LocationUpdatesService:Service() {
         return true // Ensures onRebind() is called when a client re-binds.
     }
     override fun onDestroy() {
+        Log.d(TAG, "Service Destroyed")
         mServiceHandler.removeCallbacksAndMessages(null)
+        super.onDestroy()
     }
     /**
      * Makes a request for location updates. Note that in this sample we merely log the
@@ -254,10 +259,7 @@ class LocationUpdatesService:Service() {
         intent.putExtra(EXTRA_LOCATION, location)
         LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent)
         // Update notification content if running as a foreground service.
-        if (serviceIsRunningInForeground(this))
-        {
-            mNotificationManager.notify(NOTIFICATION_ID, notification)
-        }
+        updateNotification()
     }
 
     private fun stopMeasurement() {
@@ -278,7 +280,20 @@ class LocationUpdatesService:Service() {
      * Class used for the client Binder. Since this service runs in the same process as its
      * clients, we don't need to deal with IPC.
      */
-    inner class LocalBinder:Binder() {
+    inner class LocalBinder:iForegroundServiceBinder,Binder() {
+        override public fun updateTime(autoFinishInterval: Long, startTime: Long) {
+            Log.d(TAG, "Binding")
+            Log.d(TAG,"Autofinishinterval: " + autoFinishInterval + " Starttime: " + startTime)
+            AutoFinishInterval = autoFinishInterval
+            StartTime = startTime
+        }
+
+        override public fun stop() {
+            Log.d(TAG, "Stopping")
+            removeLocationUpdates()
+            stopSelf()
+        }
+
         internal val service:LocationUpdatesService
             get() {
                 return this@LocationUpdatesService
@@ -314,7 +329,7 @@ class LocationUpdatesService:Service() {
         private val CHANNEL_ID = "channel_01"
         internal val ACTION_BROADCAST = PACKAGE_NAME + ".broadcast"
         internal val EXTRA_LOCATION = PACKAGE_NAME + ".location"
-        private val EXTRA_STARTED_FROM_NOTIFICATION = (PACKAGE_NAME + ".started_from_notification")
+        private val EXTRA_STOPPED_FROM_NOTIFICATION = (PACKAGE_NAME + ".stopped_from_notification")
         internal val EXTRA_STOP_MEASUREMENT = PACKAGE_NAME + ".stop"
         /**
          * The desired interval for location updates. Inexact. Updates may be more or less frequent.
@@ -329,5 +344,26 @@ class LocationUpdatesService:Service() {
          * The identifier for the notification displayed for the foreground service.
          */
         private val NOTIFICATION_ID = 12345678
+    }
+    inner class CountDownButtonTimer(countDownInterval: Long, interval: Long) :
+        CountDownTimer(countDownInterval, interval) {
+        override fun onFinish() {
+            // Nothing to do for now
+        }
+
+        override fun onTick(elapsedTime: Long) {
+            updateNotification()
+//            formatButton(
+//                measurementState,
+//                delayedStartTime + delayedStartInterval - System.currentTimeMillis()
+//            );
+        }
+    }
+
+    private fun updateNotification() {
+        if (serviceIsRunningInForeground(this))
+        {
+            mNotificationManager.notify(NOTIFICATION_ID, notification)
+        }
     }
 }

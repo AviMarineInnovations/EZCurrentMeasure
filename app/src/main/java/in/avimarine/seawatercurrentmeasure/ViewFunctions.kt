@@ -31,7 +31,22 @@ fun locationIntoTextViews(
     }
 }
 
-fun getSpeedString(firstTime: Long, secondTime: Long, dist: Double, units: String = "m_per_min"): String {
+fun generateHistoryString(
+    loc1: Location, loc2: Location, dir: Double, spd: String
+)  : String {
+    val l1 = String.format("%.6f", loc1.latitude) + String.format("%.6f", loc1.longitude)
+    val l2 = String.format("%.6f", loc2.latitude) + String.format("%.6f", loc2.longitude)
+    val t1 = timeStamptoDateString(loc1.time)
+    val t2 = timeStamptoDateString(loc2.time)
+    return "At " + t2 + " Direction: " + dir + " Speed: " + spd
+}
+
+fun getSpeedString(
+    firstTime: Long,
+    secondTime: Long,
+    dist: Double,
+    units: String = "m_per_min"
+): String {
     val speed = getSpeed(dist, firstTime, secondTime)
     if (speed > 3000) { //The current is over 95 kts
         return "Error"
@@ -47,7 +62,10 @@ fun getSpeedString(firstTime: Long, secondTime: Long, dist: Double, units: Strin
             toKnots(speed)
         )) + " kts"
     } else {
-        return (if (speed < 10) String.format("%.1f", speed) else String.format("%.0f", speed)) + " m/min"
+        return (if (speed < 10) String.format("%.1f", speed) else String.format(
+            "%.0f",
+            speed
+        )) + " m/min"
     }
 }
 
@@ -55,5 +73,5 @@ fun getTimerString(milliseconds: Long): String {
     val hours = milliseconds / 1000 / 3600
     val minutes = (milliseconds / 1000 / 60) % 60
     val seconds = milliseconds / 1000 % 60
-    return String.format("%02d:%02d:%02d", hours,minutes,seconds)
+    return String.format("%02d:%02d:%02d", hours, minutes, seconds)
 }

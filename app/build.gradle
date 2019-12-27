@@ -30,11 +30,12 @@ dependencies {
     implementation 'com.google.android.gms:play-services-location:17.0.0'
     implementation 'net.sf.geographiclib:GeographicLib-Java:1.49'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
+    implementation 'com.mapbox.mapboxsdk:mapbox-sdk-turf:4.9.0'
     testImplementation 'junit:junit:4.12'
     testImplementation 'androidx.test:core:1.2.0'
     testImplementation 'org.mockito:mockito-core:1.10.19'
     androidTestImplementation 'androidx.test:runner:1.2.0'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
     implementation 'com.google.android.material:material:1.0.0'
-    compile "org.jetbrains.kotlin:kotlin-reflect:1.3.31"
+    implementation "org.jetbrains.kotlin:kotlin-reflect:1.3.31"
 }

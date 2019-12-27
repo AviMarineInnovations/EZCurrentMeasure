@@ -2,6 +2,7 @@ package `in`.avimarine.seawatercurrentmeasure
 
 import android.content.Context
 import android.location.Location
+import android.util.Log
 import androidx.preference.PreferenceManager
 import java.text.DateFormat
 import java.util.*
@@ -12,6 +13,10 @@ import java.util.*
  * first created by aayaffe on 14/09/2019.
  */
 internal object Utils {
+    val Any.TAG: String
+        get() {
+            return javaClass.simpleName
+        }
     val KEY_REQUESTING_LOCATION_UPDATES = "requesting_locaction_updates"
     /**
      * Returns true if requesting location updates, otherwise returns false.
@@ -42,9 +47,12 @@ internal object Utils {
         else
             "(" + location.getLatitude() + ", " + location.getLongitude() + ")"
     }
-    fun getLocationTitle(context:Context):String {
-        return context.getString(R.string.location_updated,
-            DateFormat.getDateTimeInstance().format(Date()))
+    fun getLocationTitle(context:Context, startTime:Long , autoFinishInterval: Long):String {
+//        Log.d(TAG,"Starttime: "+ startTime+", autofinishInterval: "+ autoFinishInterval+", now: "+System.currentTimeMillis())
+        return "Autofinish in: " + getTimerString(autoFinishInterval - (System.currentTimeMillis() - startTime))
+
+//        return context.getString(R.string.location_updated,
+//            DateFormat.getDateTimeInstance().format(Date()))
     }
 }/**
  * Copyright 2017 Google Inc. All Rights Reserved.

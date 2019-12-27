@@ -1,5 +1,10 @@
 package `in`.avimarine.seawatercurrentmeasure
 
+import `in`.avimarine.seawatercurrentmeasure.LocationUpdatesService
+import `in`.avimarine.seawatercurrentmeasure.Permissions.BACKGROUND_LOCATION_PERMISSIONS_REQUEST_CODE
+import `in`.avimarine.seawatercurrentmeasure.Permissions.FINE_LOCATION_PERMISSIONS_REQUEST_CODE
+import `in`.avimarine.seawatercurrentmeasure.Permissions.askForPermissions
+import `in`.avimarine.seawatercurrentmeasure.Permissions.checkPermissions
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.*
@@ -19,19 +24,11 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.preference.PreferenceManager
 import com.google.android.gms.location.*
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.android.synthetic.main.activity_main.*
-import android.content.Context.BIND_AUTO_CREATE
-import `in`.avimarine.seawatercurrentmeasure.LocationUpdatesService
-import android.content.Intent
-import androidx.core.app.ComponentActivity
-import androidx.core.app.ComponentActivity.ExtraData
-import androidx.core.content.ContextCompat.getSystemService
-import android.icu.lang.UCharacter.GraphemeClusterBreak.T
-import android.R.attr.name
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
 
 
 class MainActivity : AppCompatActivity() {
@@ -50,8 +47,6 @@ class MainActivity : AppCompatActivity() {
     private var delayedStartTime: Long = 0
     private lateinit var firstLocation: Location
     private lateinit var secondLocation: Location
-    private val FINE_LOCATION_PERMISSIONS_REQUEST_CODE: Int = 12345
-    private val BACKGROUND_LOCATION_PERMISSIONS_REQUEST_CODE = 34;
     private var locationRequest: LocationRequest? = null
     private val UPDATE_INTERVAL: Long = 1000
     private val FASTEST_INTERVAL: Long = 1000 // = 5 seconds
@@ -60,6 +55,7 @@ class MainActivity : AppCompatActivity() {
     private var autoFinishInterval: Long = 0
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationCallback: LocationCallback
+    private lateinit var binder : LocationUpdatesService.LocalBinder
     val Any.TAG: String
         get() {
             return javaClass.simpleName
@@ -71,10 +67,7 @@ class MainActivity : AppCompatActivity() {
 
         initForegroundService()
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
-
-        if (!isLocationPermissionGranted())
-            askForPermissions()
-
+        askForPermissions(this)
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(locationResult: LocationResult?) {
                 locationResult ?: return
@@ -107,32 +100,13 @@ class MainActivity : AppCompatActivity() {
             this.startActivity(intent)
             return true
         }
+        if (id == R.id.history_menu_action) {
+            val intent = Intent(this, HistoryActivity::class.java)
+            this.startActivity(intent)
+            return true
+        }
         return super.onOptionsItemSelected(item)
     }
-
-
-    private fun askForPermissions() {
-        if (!isLocationPermissionGranted()) {
-            if (ActivityCompat.shouldShowRequestPermissionRationale(
-                    this, Manifest.permission.ACCESS_FINE_LOCATION
-                )
-            ) {
-                // Show an explanation to the user *asynchronously* -- don't block
-                // this thread waiting for the user'getDirString response! After the user
-                // sees the explanation, try again to request the permission.
-            } else {
-                ActivityCompat.requestPermissions(
-                    this,
-                    arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
-                    FINE_LOCATION_PERMISSIONS_REQUEST_CODE
-                )
-            }
-        }
-    }
-
-    private fun isLocationPermissionGranted() =
-        (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-                == PackageManager.PERMISSION_GRANTED)
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
         if (keyCode == KEYCODE_VOLUME_DOWN) {
@@ -144,15 +118,14 @@ class MainActivity : AppCompatActivity() {
 
     @SuppressLint("MissingPermission")
     fun startButtonClick(view: View) {
-        val (magnetic, fromNotation, speedUnit) = getPreferences()
-        if (!checkPermissions()) {
-            requestPermissions();
+        val (magnetic, fromNotation, speedUnit) = Preferences.getPreferences(this)
+        delayedStartInterval = Preferences.getDelayedStartInterval(this)
+        if (!checkPermissions(this)) {
+            Permissions.requestPermissions(this);
         } else {
             mService?.requestLocationUpdates();
         }
-        if (!isLocationPermissionGranted())
-            askForPermissions()
-        else {
+        if (askForPermissions(this)){
             if (delayedStartInterval > 0 && firstTime == 0L) {
                 delayedStartTime = System.currentTimeMillis()
                 measurementState = MeasurementState.DELAYED_START
@@ -195,6 +168,8 @@ class MainActivity : AppCompatActivity() {
             secondLocation,
             secondTime
         )
+        val history = generateHistoryString(firstLocation,secondLocation,dir , getSpeedString(firstTime, secondTime, dist, speedUnit)) //TODO: use add history, convert to JSON
+        Preferences.saveHistory(history,this)
         firstTime = 0
         secondTime = 0
         countUpTimer.stop()
@@ -203,11 +178,12 @@ class MainActivity : AppCompatActivity() {
             stopLocationUpdates()
         }
         inMeasurement = false
+        binder.stop()
 
     }
 
     private fun endMeasurement() {
-        val (magnetic, fromNotation, speedUnit) = getPreferences()
+        val (magnetic, fromNotation, speedUnit) = Preferences.getPreferences(this)
         fusedLocationClient.lastLocation
             .addOnSuccessListener { location: Location? ->
                 if (location != null) {
@@ -217,6 +193,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startMeasurement(location: Location) {
+        autoFinishInterval = Preferences.getAutoFinishInterval(this)
         firstLocation = location
         firstTime = System.currentTimeMillis()
         measurementState = MeasurementState.RUNNING
@@ -243,6 +220,7 @@ class MainActivity : AppCompatActivity() {
         }
         countUpTimer = CountUpButtonTimer(1000).start()
         inMeasurement = true
+        binder.updateTime(autoFinishInterval,firstTime)
     }
 
     private fun startMeasurement() {
@@ -301,7 +279,7 @@ class MainActivity : AppCompatActivity() {
 //        LocalBroadcastManager.getInstance(this).unregisterReceiver(myReceiver);
         appVisibility = false
         if (!inMeasurement) {
-            stopLocationUpdates()
+//            stopLocationUpdates()
             LocalBroadcastManager.getInstance(this).unregisterReceiver(myReceiver);
         }
         super.onPause()
@@ -333,8 +311,6 @@ class MainActivity : AppCompatActivity() {
             unbindService(mServiceConnection);
             mBound = false;
         }
-//        PreferenceManager.getDefaultSharedPreferences(this).unre
-//            .unregisterOnSharedPreferenceChangeListener();
         super.onStop()
     }
 
@@ -369,21 +345,7 @@ class MainActivity : AppCompatActivity() {
         locationUpdates = true
     }
 
-    private fun getPreferences(): Triple<Boolean, Boolean, String> {
-        val sharedPreferences =
-            PreferenceManager.getDefaultSharedPreferences(this /* Activity context */)
-        var magnetic = false
-        var fromNotation = false
-        var speedUnit : String = "m_per_min"
-        if (sharedPreferences != null) {
-            magnetic = sharedPreferences.getBoolean("magnetic", false)
-            fromNotation = sharedPreferences.getBoolean("from_notation", false)
-            speedUnit = sharedPreferences.getString("speed_unit", "m_per_min").toString()
-            delayedStartInterval = (sharedPreferences.getString("delayed_start", "0")?.toLong() ?: 0) * 1000
-            autoFinishInterval = (sharedPreferences.getString("auto_finish", "0")?.toLong() ?: 0) * 1000
-        }
-        return Triple(magnetic, fromNotation, speedUnit)
-    }
+
 
     private fun formatButton(measurementState: MeasurementState, time: Long) {
         if (measurementState == MeasurementState.RUNNING) {
@@ -418,7 +380,9 @@ class MainActivity : AppCompatActivity() {
     private val mServiceConnection = object : ServiceConnection {
 
         override fun onServiceConnected(name: ComponentName, service: IBinder) {
-            val binder = service as LocationUpdatesService.LocalBinder
+            binder = service as LocationUpdatesService.LocalBinder
+            Log.d(TAG, "Binding")
+            binder.updateTime(autoFinishInterval,firstTime)//https://stackoverflow.com/questions/9954878/android-pass-parameter-to-service-from-activity
             mService = binder.service
             mBound = true
         }
@@ -429,63 +393,17 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    /**
-     * Returns the current state of the permissions needed.
-     */
-    private fun checkPermissions(): Boolean {
-        return (PackageManager.PERMISSION_GRANTED == ActivityCompat.checkSelfPermission(
-            this,
-            Manifest.permission.ACCESS_FINE_LOCATION
-        ))
-    }
 
-    private fun requestPermissions() {
-        val shouldProvideRationale = ActivityCompat.shouldShowRequestPermissionRationale(
-            this,
-            Manifest.permission.ACCESS_FINE_LOCATION
-        )
-        // Provide an additional rationale to the user. This would happen if the user denied the
-        // request previously, but didn't check the "Don't ask again" checkbox.
-        if (shouldProvideRationale) {
-            Log.i(TAG, "Displaying permission rationale to provide additional context.")
-            Snackbar.make(
-                findViewById(R.id.activity_main),
-                R.string.permission_rationale,
-                Snackbar.LENGTH_INDEFINITE
-            )
-                .setAction(R.string.ok, object : View.OnClickListener {
-                    override fun onClick(view: View) {
-                        // Request permission
-                        ActivityCompat.requestPermissions(
-                            this@MainActivity,
-                            arrayOf<String>(Manifest.permission.ACCESS_FINE_LOCATION),
-                            BACKGROUND_LOCATION_PERMISSIONS_REQUEST_CODE
-                        )
-                    }
-                })
-                .show()
-        } else {
-            Log.i(TAG, "Requesting permission")
-            // Request permission. It's possible this can be auto answered if device policy
-            // sets the permission in a given state or the user denied the permission
-            // previously and checked "Never ask again".
-            ActivityCompat.requestPermissions(
-                this@MainActivity,
-                arrayOf<String>(Manifest.permission.ACCESS_FINE_LOCATION),
-                BACKGROUND_LOCATION_PERMISSIONS_REQUEST_CODE
-            )
-        }
-    }
+
+
 
     private fun initForegroundService() {
         myReceiver = MyReceiver()
         setContentView(R.layout.activity_main);
 
         // Check that the user hasn't revoked permissions by going to Settings.
-        if (Utils.requestingLocationUpdates(this)) {
-            if (!checkPermissions()) {
-                requestPermissions()
-            }
+        if (Utils.requestingLocationUpdates(this) && !checkPermissions(this)) {
+            Permissions.requestPermissions(this)
         }
     }
 
