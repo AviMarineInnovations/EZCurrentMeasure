@@ -14,10 +14,6 @@ class HistoryActivity : AppCompatActivity() {
         setContentView(R.layout.activity_history)
         setSupportActionBar(toolbar)
         historyText.text = Preferences.getHistory(this)
-        fab.setOnClickListener { view ->
-            Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                .setAction("Action", null).show()
-        }
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
     }
 
