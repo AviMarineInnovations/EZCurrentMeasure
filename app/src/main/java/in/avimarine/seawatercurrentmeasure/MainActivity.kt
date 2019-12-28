@@ -159,6 +159,7 @@ class MainActivity : AppCompatActivity() {
         locationIntoTextViews(location, text_lat2, text_lon2, text_time2)
         val dist = getDistance(firstLocation, secondLocation)
         var dir = getDirection(firstLocation, secondLocation)
+        val speed = getSpeed(dist,firstTime,secondTime)
         text_speed.text = getSpeedString(firstTime, secondTime, dist, speedUnit)
 
         text_dir.text = getDirString(
@@ -168,8 +169,7 @@ class MainActivity : AppCompatActivity() {
             secondLocation,
             secondTime
         )
-        val history = generateHistoryString(firstLocation,secondLocation,dir , getSpeedString(firstTime, secondTime, dist, speedUnit)) //TODO: use add history, convert to JSON
-        Preferences.saveHistory(history,this)
+        History.addHistory(firstLocation,secondLocation,speed, dir,this)
         firstTime = 0
         secondTime = 0
         countUpTimer.stop()

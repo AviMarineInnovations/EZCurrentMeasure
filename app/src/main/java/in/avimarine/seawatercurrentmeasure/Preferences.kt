@@ -2,8 +2,10 @@ package `in`.avimarine.seawatercurrentmeasure
 
 import android.content.Context
 import androidx.preference.PreferenceManager
+import com.google.gson.JsonArray
 import org.json.JSONArray
 import org.json.JSONException
+import org.json.JSONObject
 
 /**
  * This file is part of an
@@ -43,12 +45,23 @@ internal object Preferences {
         return 0
     }
 
-    fun addHistory (entry: String, context: Context){
+    fun addHistory (entry: JSONObject, context: Context, maxHistory:Int){
         val history = getHistory(context)
-        val historyJson: JSONArray = try { JSONArray(history) } catch (e: JSONException) { JSONArray() }
+        var historyJson: JSONArray = try { JSONArray(history) } catch (e: JSONException) { JSONArray() }
+        historyJson = remoevOldEntries(historyJson,maxHistory)
         historyJson.put(entry)
         saveHistory(historyJson.toString(),context)
     }
+    fun remoevOldEntries(ja: JSONArray, maxSize:Int):JSONArray{
+        val ret = ja
+        if (ret.length()>maxSize){
+            for (i in 0..(ret.length()-maxSize-1)){
+                ret.remove(0)
+            }
+        }
+        return ret
+    }
+
     fun saveHistory(history: String, context: Context){
         val sharedPreferences =
             PreferenceManager.getDefaultSharedPreferences(context)

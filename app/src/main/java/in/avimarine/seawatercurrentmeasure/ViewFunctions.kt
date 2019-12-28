@@ -31,15 +31,7 @@ fun locationIntoTextViews(
     }
 }
 
-fun generateHistoryString(
-    loc1: Location, loc2: Location, dir: Double, spd: String
-)  : String {
-    val l1 = String.format("%.6f", loc1.latitude) + String.format("%.6f", loc1.longitude)
-    val l2 = String.format("%.6f", loc2.latitude) + String.format("%.6f", loc2.longitude)
-    val t1 = timeStamptoDateString(loc1.time)
-    val t2 = timeStamptoDateString(loc2.time)
-    return "At " + t2 + " Direction: " + dir + " Speed: " + spd
-}
+
 
 fun getSpeedString(
     firstTime: Long,
@@ -48,6 +40,10 @@ fun getSpeedString(
     units: String = "m_per_min"
 ): String {
     val speed = getSpeed(dist, firstTime, secondTime)
+    return getSpeedString(speed,units)
+}
+
+fun getSpeedString(speed: Double, units:String="m_per_minute") : String{
     if (speed > 3000) { //The current is over 95 kts
         return "Error"
     }
