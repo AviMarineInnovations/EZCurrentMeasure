@@ -8,7 +8,7 @@ import android.os.Binder
  * first created by aayaffe on 21/09/2019.
  */
 interface iForegroundServiceBinder {
-    public fun updateTime(autoFinishInterbal: Long, startTime: Long) //TODO : CALL from MAin!!
+    public fun updateTime(autoFinishInterbal: Long, delayedStartInterval: Long, delayedStartTime:Long, startTime: Long) //TODO : CALL from MAin!!
     public fun stop() //TODO : CALL from MAin!!
 
 }

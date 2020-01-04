@@ -48,6 +48,8 @@ import com.google.android.gms.tasks.Task;
 class LocationUpdatesService:Service() {
 
     private var AutoFinishInterval = 0L
+    private var autoStartInterval = 0L
+    private var delayedStartTime = 0L
     private var StartTime = 0L
 
 
@@ -102,7 +104,7 @@ class LocationUpdatesService:Service() {
                 .addAction(R.drawable.ic_cancel, getString(R.string.stop_measurement),
                     servicePendingIntent)
 //                .setContentText(text)
-                .setContentTitle(Utils.getLocationTitle(this,StartTime , AutoFinishInterval))
+                .setContentTitle(Utils.getLocationTitle(this,StartTime , AutoFinishInterval, delayedStartTime, autoStartInterval))
                 .setOngoing(true)
                 .setPriority(NotificationCompat.PRIORITY_MAX)
                 .setSmallIcon(R.mipmap.ic_launcher)
@@ -252,7 +254,6 @@ class LocationUpdatesService:Service() {
         }
     }
     private fun onNewLocation(location:Location) {
-        Log.i(TAG, "New location: " + location)
         mLocation = location
         // Notify anyone listening for broadcasts about the new location.
         val intent = Intent(ACTION_BROADCAST)
@@ -281,10 +282,11 @@ class LocationUpdatesService:Service() {
      * clients, we don't need to deal with IPC.
      */
     inner class LocalBinder:iForegroundServiceBinder,Binder() {
-        override public fun updateTime(autoFinishInterval: Long, startTime: Long) {
-            Log.d(TAG, "Binding")
+        override public fun updateTime(autoFinishInterval: Long, delayedStartInterval: Long, delayedStartT: Long, startTime: Long) {
             Log.d(TAG,"Autofinishinterval: " + autoFinishInterval + " Starttime: " + startTime)
             AutoFinishInterval = autoFinishInterval
+            autoStartInterval = delayedStartInterval
+            delayedStartTime = delayedStartT
             StartTime = startTime
         }
 
@@ -353,10 +355,6 @@ class LocationUpdatesService:Service() {
 
         override fun onTick(elapsedTime: Long) {
             updateNotification()
-//            formatButton(
-//                measurementState,
-//                delayedStartTime + delayedStartInterval - System.currentTimeMillis()
-//            );
         }
     }
 

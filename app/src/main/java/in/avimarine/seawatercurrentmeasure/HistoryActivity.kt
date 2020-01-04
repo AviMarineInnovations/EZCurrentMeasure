@@ -35,7 +35,7 @@ class HistoryActivity : AppCompatActivity() {
             l.longitude = entry.getDouble("Lon2")
             l.latitude = entry.getDouble("Lat2")
             val time2 = entry.getLong("time2")
-            ret += timeStamptoDateString(time2) + ", " + getDirString(entry.getDouble("direction"),false,fromNotation,l,time2) + "T, " +  getSpeedString(entry.getDouble("speed")) + "\n"
+            ret += timeStamptoDateString(time2) + ", " + getDirString(entry.getDouble("direction"),false,fromNotation,l,time2) + "T, " +  getSpeedString(entry.getDouble("speed"),speedUnit) + "\n"
         }
         return ret
     }

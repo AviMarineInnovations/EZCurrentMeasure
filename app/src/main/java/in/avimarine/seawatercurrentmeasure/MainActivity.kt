@@ -1,6 +1,5 @@
 package `in`.avimarine.seawatercurrentmeasure
 
-import `in`.avimarine.seawatercurrentmeasure.LocationUpdatesService
 import `in`.avimarine.seawatercurrentmeasure.Permissions.BACKGROUND_LOCATION_PERMISSIONS_REQUEST_CODE
 import `in`.avimarine.seawatercurrentmeasure.Permissions.FINE_LOCATION_PERMISSIONS_REQUEST_CODE
 import `in`.avimarine.seawatercurrentmeasure.Permissions.askForPermissions
@@ -23,11 +22,8 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
-import androidx.preference.PreferenceManager
 import com.google.android.gms.location.*
-import com.google.android.material.snackbar.Snackbar
 import kotlinx.android.synthetic.main.activity_main.*
 
 
@@ -127,13 +123,19 @@ class MainActivity : AppCompatActivity() {
         }
         if (askForPermissions(this)){
             if (delayedStartInterval > 0 && firstTime == 0L) {
+                if (measurementState == MeasurementState.DELAYED_START){
+                    measurementState = MeasurementState.STOPPED
+                    resetMeasurmentState()
+
+                    return
+                }
                 delayedStartTime = System.currentTimeMillis()
                 measurementState = MeasurementState.DELAYED_START
                 if (::countDownToStartTimer.isInitialized) {
-                    countDownToStartTimer.cancel();
+                    countDownToStartTimer.cancel()
                 }
                 countDownToStartTimer = CountDownButtonTimer(delayedStartInterval, 1000).start()
-                return;
+                return
             }
             fusedLocationClient.lastLocation
                 .addOnSuccessListener { location: Location? ->
@@ -170,16 +172,28 @@ class MainActivity : AppCompatActivity() {
             secondTime
         )
         History.addHistory(firstLocation,secondLocation,speed, dir,this)
+        resetMeasurmentState()
+
+    }
+
+    private fun resetMeasurmentState() {
         firstTime = 0
         secondTime = 0
-        countUpTimer.stop()
+        if (::countDownToStartTimer.isInitialized) {
+            countDownToStartTimer.cancel()
+        }
+        if (::countDownToFinishTimer.isInitialized) {
+            countDownToFinishTimer.cancel()
+        }
+        if (::countUpTimer.isInitialized) {
+            countUpTimer.stop()
+        }
         formatButton(MeasurementState.STOPPED, 0)
-        if (!appVisibility){
+        if (!appVisibility) {
             stopLocationUpdates()
         }
         inMeasurement = false
         binder.stop()
-
     }
 
     private fun endMeasurement() {
@@ -220,7 +234,7 @@ class MainActivity : AppCompatActivity() {
         }
         countUpTimer = CountUpButtonTimer(1000).start()
         inMeasurement = true
-        binder.updateTime(autoFinishInterval,firstTime)
+        binder.updateTime(autoFinishInterval,delayedStartInterval,delayedStartTime,firstTime)
     }
 
     private fun startMeasurement() {
@@ -279,7 +293,6 @@ class MainActivity : AppCompatActivity() {
 //        LocalBroadcastManager.getInstance(this).unregisterReceiver(myReceiver);
         appVisibility = false
         if (!inMeasurement) {
-//            stopLocationUpdates()
             LocalBroadcastManager.getInstance(this).unregisterReceiver(myReceiver);
         }
         super.onPause()
@@ -382,7 +395,7 @@ class MainActivity : AppCompatActivity() {
         override fun onServiceConnected(name: ComponentName, service: IBinder) {
             binder = service as LocationUpdatesService.LocalBinder
             Log.d(TAG, "Binding")
-            binder.updateTime(autoFinishInterval,firstTime)//https://stackoverflow.com/questions/9954878/android-pass-parameter-to-service-from-activity
+            binder.updateTime(autoFinishInterval,delayedStartInterval,delayedStartTime,firstTime)//https://stackoverflow.com/questions/9954878/android-pass-parameter-to-service-from-activity
             mService = binder.service
             mBound = true
         }
@@ -392,11 +405,6 @@ class MainActivity : AppCompatActivity() {
             mBound = false
         }
     }
-
-
-
-
-
     private fun initForegroundService() {
         myReceiver = MyReceiver()
         setContentView(R.layout.activity_main);
@@ -414,15 +422,12 @@ class MainActivity : AppCompatActivity() {
         override fun onReceive(context: Context, intent: Intent) {
             val stopMeasurement = intent.getBooleanExtra(LocationUpdatesService.EXTRA_STOP_MEASUREMENT, false)
             if (stopMeasurement){
-                endMeasurement()
+                resetMeasurmentState()
             }
             val location =
                 intent.getParcelableExtra<Location>(LocationUpdatesService.EXTRA_LOCATION)
             if (location != null) {
-//                Toast.makeText(
-//                    this@MainActivity, Utils.getLocationText(location),
-//                    Toast.LENGTH_SHORT
-//                ).show()
+                Log.d(TAG, location.toString())
                 //TODO USe the location received from receiver
             }
         }
