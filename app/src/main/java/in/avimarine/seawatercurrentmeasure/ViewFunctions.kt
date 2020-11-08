@@ -10,21 +10,21 @@ import android.widget.TextView
  */
 fun locationIntoTextViews(
     loc: Location,
-    lat_tv: TextView,
-    lon_tv: TextView,
+    lat_tv: TextView?,
+    lon_tv: TextView?,
     time_tv: TextView,
     acc_tv: TextView? = null,
     empty: Boolean = false
 ) {
     if (empty) {
-        lat_tv.text = "?"
-        lon_tv.text = "?"
+        lat_tv?.text = "?"
+        lon_tv?.text = "?"
         time_tv.text = "?"
         if (acc_tv != null)
             acc_tv.text = "?"
     } else {
-        lat_tv.text = String.format("%.6f", loc.latitude)
-        lon_tv.text = String.format("%.6f", loc.longitude)
+        lat_tv?.text = String.format("%.6f", loc.latitude)
+        lon_tv?.text = String.format("%.6f", loc.longitude)
         time_tv.text = timeStamptoDateString(loc.time)
         if (acc_tv != null)
             acc_tv.text = String.format("%.1f m", loc.accuracy)

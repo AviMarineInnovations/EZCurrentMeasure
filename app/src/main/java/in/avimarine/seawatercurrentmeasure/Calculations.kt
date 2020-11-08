@@ -42,6 +42,10 @@ fun getDirString(dir: Double, magnetic: Boolean, fromNotation: Boolean, location
     return String.format("%03d", Math.round(calcDir)) + if (magnetic) " M" else ""
 }
 
+fun getDirErrorString(dir:Double):String{
+    return String.format("%d", Math.round(dir))
+}
+
 
 
 fun toKnots(speed: Double): Double {
@@ -123,19 +127,24 @@ fun Location.toPoint() : Point {
 
 /**
  * Returns Error in degrees (total error equals +/- ret)
+ * err1, err2 in meters
  */
-fun getDirError(firstLocation: Location, secondLocation: Location, err1: Double, err2: Double): Double {
+fun getDirError(firstLocation: Location, secondLocation: Location): Double {
     val ber = getDirection(firstLocation,secondLocation)
-    val tmpLocA = TurfMeasurement.destination(firstLocation.toPoint(),err1,ber-90,TurfConstants.UNIT_METERS)
-    val tmpLocB = TurfMeasurement.destination(secondLocation.toPoint(),err2,ber+90,TurfConstants.UNIT_METERS)
+    val tmpLocA = TurfMeasurement.destination(firstLocation.toPoint(),
+        firstLocation.accuracy.toDouble(),(ber-90)%360,TurfConstants.UNIT_METERS)
+    val tmpLocB = TurfMeasurement.destination(secondLocation.toPoint(),
+        secondLocation.accuracy.toDouble(),(ber+90)%360,TurfConstants.UNIT_METERS)
     var res = TurfMeasurement.bearing(tmpLocA,tmpLocB)
     res = (res-ber)
     return res
 }
 
 /**
- * Returns Error in meters (total error equals +/- ret)
+ * @return Speed in metres per minute
  */
-fun getDistError(err1: Double, err2: Double): Double {
-    return err1+err2
+fun getSpdError(firstLocation: Location, secondLocation: Location): Double {
+    val dist = firstLocation.accuracy + secondLocation.accuracy;
+    val duration = (secondLocation.time - firstLocation.time).toDouble() / (1000 * 60)
+    return dist / duration
 }

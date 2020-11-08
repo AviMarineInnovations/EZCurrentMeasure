@@ -27,7 +27,7 @@ class CalculationsKtTest {
         `when`(loca.latitude).thenReturn(0.0)
         `when`(loca.longitude).thenReturn(0.0)
         `when`(locb.latitude).thenReturn(0.0)
-        `when`(locb.longitude).thenReturn(0.01)
-        assertEquals(0.0,getDirError(loca,locb,12.0,20.0),0.001)
+        `when`(locb.longitude).thenReturn(0.0166667)
+        assertEquals(63.43,getDirError(loca,locb,1852.0,1852.0),0.1)
     }
 }

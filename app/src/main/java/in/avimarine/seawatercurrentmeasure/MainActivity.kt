@@ -158,10 +158,13 @@ class MainActivity : AppCompatActivity() {
     ) {
         secondLocation = location
         secondTime = System.currentTimeMillis()
-        locationIntoTextViews(location, text_lat2, text_lon2, text_time2)
+        locationIntoTextViews(location, null, null, text_time2)
         val dist = getDistance(firstLocation, secondLocation)
         var dir = getDirection(firstLocation, secondLocation)
         val speed = getSpeed(dist,firstTime,secondTime)
+        val dirErr = getDirError(firstLocation,secondLocation)
+        text_spd_err.text = "\u00B1" + getSpeedString(firstTime, secondTime,
+            (firstLocation.accuracy+secondLocation.accuracy).toDouble(),speedUnit)
         text_speed.text = getSpeedString(firstTime, secondTime, dist, speedUnit)
 
         text_dir.text = getDirString(
@@ -170,6 +173,9 @@ class MainActivity : AppCompatActivity() {
             fromNotation,
             secondLocation,
             secondTime
+        )
+        text_dir_err.text = "\u00B1" + getDirErrorString(
+            dirErr
         )
         History.addHistory(firstLocation,secondLocation,speed, dir,this)
         resetMeasurmentState()
@@ -211,17 +217,19 @@ class MainActivity : AppCompatActivity() {
         firstLocation = location
         firstTime = System.currentTimeMillis()
         measurementState = MeasurementState.RUNNING
-        locationIntoTextViews(location, text_lat1, text_lon1, text_time1, null)
+        locationIntoTextViews(location, null, null, text_time, null)
         locationIntoTextViews(
             location,
-            text_lat2,
-            text_lon2,
+            null,
+            null,
             text_time2,
             null,
             true
         )
         text_speed.text = "?"
         text_dir.text = "?"
+        text_dir_err.text = "?"
+        text_spd_err.text = "?"
         if (::countDownToStartTimer.isInitialized) {
             countDownToStartTimer.cancel();
         }
