@@ -185,3 +185,4 @@ local.properties
 ehthumbs.db
 Thumbs.db
 .idea/sonarlint/issuestore/
+.idea/deploymentTargetDropDown.xml
