@@ -19,7 +19,7 @@ import org.robolectric.RobolectricTestRunner
     @Test
     fun remoevOldEntries() {
         val ja = JSONArray("[{\"a\":1},{\"a\":2},{\"a\":3},{\"a\":4}]")
-        val jd = Preferences.remoevOldEntries(ja,2)
+        val jd = Preferences.removeOldEntries(ja,2)
         assertEquals(2,jd.length())
     }
 }
