@@ -38,6 +38,7 @@ dependencies {
     implementation 'net.sf.geographiclib:GeographicLib-Java:1.49'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     implementation 'com.mapbox.mapboxsdk:mapbox-sdk-turf:4.9.0'
+    implementation project(path: ':AviMarineAndroidUtils')
     testImplementation 'junit:junit:4.13.2'
     testImplementation 'androidx.test:core:1.5.0'
     testImplementation 'org.mockito:mockito-core:2.19.0'
