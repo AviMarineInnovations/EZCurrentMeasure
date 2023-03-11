@@ -71,3 +71,22 @@ fun getTimerString(milliseconds: Long): String {
     val seconds = milliseconds / 1000 % 60
     return String.format("%02d:%02d:%02d", hours, minutes, seconds)
 }
+
+fun getLatString(lat: Double): String {
+    if (lat>90 || lat<-90)
+        return "Error"
+    return String.format("%02d", Math.abs(Math.floor(lat)).toInt()) + "\u00B0 " +  String.format("%04.1f", Math.abs(
+        lat - Math.floor(lat)
+    ) * 60) + "'"+ if (lat>0) "N" else "S"
+}
+fun getLonString(lon: Double): String {
+    if (lon > 180 || lon < -180)
+        return "Error"
+    return String.format("%03d", Math.abs(Math.floor(lon)).toInt()) + "\u00B0 " + String.format("%04.1f", Math.abs(
+        lon - Math.floor(lon)
+    ) * 60) + "'"+ if (lon > 0) "E" else "W"
+}
+
+fun getShortLocation(location:Location): String{
+    return getLatString(location.latitude) + " " + getLonString(location.longitude)
+}

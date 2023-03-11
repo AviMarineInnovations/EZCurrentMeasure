@@ -253,7 +253,8 @@ class LocationUpdatesService:Service() {
             Log.e(TAG, "Lost location permission." + unlikely)
         }
     }
-    private fun onNewLocation(location:Location) {
+    private fun onNewLocation(location:Location?) {
+        if (location==null) return
         mLocation = location
         // Notify anyone listening for broadcasts about the new location.
         val intent = Intent(ACTION_BROADCAST)

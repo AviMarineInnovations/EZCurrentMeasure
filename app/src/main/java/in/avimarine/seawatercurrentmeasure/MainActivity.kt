@@ -24,7 +24,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.google.android.gms.location.*
-import kotlinx.android.synthetic.main.activity_main.*
+import `in`.avimarine.seawatercurrentmeasure.databinding.ActivityMainBinding
 
 
 class MainActivity : AppCompatActivity() {
@@ -52,30 +52,26 @@ class MainActivity : AppCompatActivity() {
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationCallback: LocationCallback
     private lateinit var binder : LocationUpdatesService.LocalBinder
-    val Any.TAG: String
-        get() {
-            return javaClass.simpleName
-        }
+    private lateinit var binding: ActivityMainBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
-
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
         initForegroundService()
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         askForPermissions(this)
         locationCallback = object : LocationCallback() {
-            override fun onLocationResult(locationResult: LocationResult?) {
-                locationResult ?: return
+            override fun onLocationResult(locationResult: LocationResult) {
                 for (location in locationResult.locations) {
                     lastLocation = location
                     lastLocationTime = location.time
                     locationIntoTextViews(
                         location,
-                        text_last_lat,
-                        text_last_lon,
-                        text_last_time,
-                        text_last_acc
+                        binding.textLastLat,
+                        binding.textLastLon,
+                        binding.textLastTime,
+                        binding.textLastAcc
                     )
                 }
             }
@@ -106,7 +102,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
         if (keyCode == KEYCODE_VOLUME_DOWN) {
-            startButtonClick(start_btn)
+            startButtonClick(binding.startBtn)
             return true
         }
         return super.onKeyDown(keyCode, event)
@@ -158,26 +154,26 @@ class MainActivity : AppCompatActivity() {
     ) {
         secondLocation = location
         secondTime = System.currentTimeMillis()
-        locationIntoTextViews(location, null, null, text_time2)
+        locationIntoTextViews(location, null, null, binding.textTime2)
         val dist = getDistance(firstLocation, secondLocation)
         var dir = getDirection(firstLocation, secondLocation)
         val speed = getSpeed(dist,firstTime,secondTime)
         val dirErr = getDirError(firstLocation,secondLocation)
-        text_spd_err.text = "\u00B1" + getSpeedString(firstTime, secondTime,
+        binding.textSpdErr.text = "\u00B1" + getSpeedString(firstTime, secondTime,
             (firstLocation.accuracy+secondLocation.accuracy).toDouble(),speedUnit)
-        text_speed.text = getSpeedString(firstTime, secondTime, dist, speedUnit)
+        binding.textSpeed.text = getSpeedString(firstTime, secondTime, dist, speedUnit)
 
-        text_dir.text = getDirString(
+        binding.textDir.text = getDirString(
             dir,
             magnetic,
             fromNotation,
             secondLocation,
             secondTime
         )
-        text_dir_err.text = "\u00B1" + getDirErrorString(
+        binding.textDirErr.text = "\u00B1" + getDirErrorString(
             dirErr
         )
-        History.addHistory(firstLocation,secondLocation,speed, dir,this)
+        HistoryDataSource.addHistory(firstLocation,secondLocation,speed, dir,this)
         resetMeasurmentState()
 
     }
@@ -204,6 +200,23 @@ class MainActivity : AppCompatActivity() {
 
     private fun endMeasurement() {
         val (magnetic, fromNotation, speedUnit) = Preferences.getPreferences(this)
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return
+        }
         fusedLocationClient.lastLocation
             .addOnSuccessListener { location: Location? ->
                 if (location != null) {
@@ -217,19 +230,19 @@ class MainActivity : AppCompatActivity() {
         firstLocation = location
         firstTime = System.currentTimeMillis()
         measurementState = MeasurementState.RUNNING
-        locationIntoTextViews(location, null, null, text_time, null)
+        locationIntoTextViews(location, null, null, binding.textTime, null)
         locationIntoTextViews(
             location,
             null,
             null,
-            text_time2,
+            binding.textTime2,
             null,
             true
         )
-        text_speed.text = "?"
-        text_dir.text = "?"
-        text_dir_err.text = "?"
-        text_spd_err.text = "?"
+        binding.textSpeed.text = "?"
+        binding.textDir.text = "?"
+        binding.textDirErr.text = "?"
+        binding.textSpdErr.text = "?"
         if (::countDownToStartTimer.isInitialized) {
             countDownToStartTimer.cancel();
         }
@@ -246,6 +259,23 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startMeasurement() {
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return
+        }
         fusedLocationClient.lastLocation
             .addOnSuccessListener { location: Location? ->
                 if (location != null) {
@@ -258,6 +288,7 @@ class MainActivity : AppCompatActivity() {
         requestCode: Int,
         permissions: Array<String>, grantResults: IntArray
     ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         when (requestCode) {
             FINE_LOCATION_PERMISSIONS_REQUEST_CODE -> {
                 // If request is cancelled, the result arrays are empty.
@@ -362,7 +393,7 @@ class MainActivity : AppCompatActivity() {
             ).show()
         }
 
-        fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, null)
+        fusedLocationClient.requestLocationUpdates(locationRequest!!, locationCallback, null)
         locationUpdates = true
     }
 
@@ -370,17 +401,17 @@ class MainActivity : AppCompatActivity() {
 
     private fun formatButton(measurementState: MeasurementState, time: Long) {
         if (measurementState == MeasurementState.RUNNING) {
-            start_btn.setBackgroundResource(R.drawable.btn_rnd_red)
-            start_btn.setText("STOP\n" + getTimerString(time))
+            binding.startBtn.setBackgroundResource(R.drawable.btn_rnd_red)
+            binding.startBtn.setText("STOP\n" + getTimerString(time))
         } else if (measurementState == MeasurementState.STOPPED) {
-            start_btn.setBackgroundResource(R.drawable.btn_rnd_grn)
-            start_btn.setText("START")
+            binding.startBtn.setBackgroundResource(R.drawable.btn_rnd_grn)
+            binding.startBtn.setText("START")
         } else if (measurementState == MeasurementState.DELAYED_START) {
-            start_btn.setBackgroundResource(R.drawable.btn_rnd_ylw)
-            start_btn.setText("Start in\n" + getTimerString(time))
+            binding.startBtn.setBackgroundResource(R.drawable.btn_rnd_ylw)
+            binding.startBtn.setText("Start in\n" + getTimerString(time))
         } else if (measurementState == MeasurementState.RUNNING_AUTO_FINISH) {
-            start_btn.setBackgroundResource(R.drawable.btn_rnd_blue)
-            start_btn.setText(
+            binding.startBtn.setBackgroundResource(R.drawable.btn_rnd_blue)
+            binding.startBtn.setText(
                 "STOP\n" + getTimerString(time) + "\nAuto stop\nin: " + getTimerString(
                     autoFinishInterval - time
                 )
@@ -415,7 +446,7 @@ class MainActivity : AppCompatActivity() {
     }
     private fun initForegroundService() {
         myReceiver = MyReceiver()
-        setContentView(R.layout.activity_main);
+//        setContentView(R.layout.activity_main);
 
         // Check that the user hasn't revoked permissions by going to Settings.
         if (Utils.requestingLocationUpdates(this) && !checkPermissions(this)) {

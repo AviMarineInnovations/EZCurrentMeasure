@@ -2,26 +2,30 @@ package `in`.avimarine.seawatercurrentmeasure
 
 import android.location.Location
 import android.os.Bundle
-import android.util.Log
-import com.google.android.material.snackbar.Snackbar
 import androidx.appcompat.app.AppCompatActivity
-
-import kotlinx.android.synthetic.main.activity_history.*
-import kotlinx.android.synthetic.main.content_history.*
+import androidx.recyclerview.widget.DividerItemDecoration
+import androidx.recyclerview.widget.RecyclerView
+import `in`.avimarine.seawatercurrentmeasure.databinding.ActivityHistoryBinding
 import org.json.JSONArray
 
+
 class HistoryActivity : AppCompatActivity() {
-    val Any.TAG: String
-        get() {
-            return javaClass.simpleName
-        }
+    private lateinit var binding: ActivityHistoryBinding
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_history)
-        setSupportActionBar(toolbar)
-        historyText.text = try { getFormattedHistory() } catch (e: Exception) { Log.e(TAG, "Error", e)
-            "No History  Available"
-        }
+        binding = ActivityHistoryBinding.inflate(layoutInflater)
+        val view = binding.root
+        setContentView(view)
+        val historyAdapter = HistoryListAdapter(HistoryDataSource.getHistoryList(this))
+        val recyclerView: RecyclerView = findViewById(R.id.history_recycler_view)
+        recyclerView.adapter = historyAdapter
+        val dividerItemDecoration = DividerItemDecoration(
+            recyclerView.context,
+            resources.configuration.orientation
+        )
+        recyclerView.addItemDecoration(dividerItemDecoration)
+
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
     }
 
