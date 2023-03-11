@@ -2,7 +2,6 @@ package `in`.avimarine.seawatercurrentmeasure
 
 import android.content.Context
 import androidx.preference.PreferenceManager
-import com.google.gson.JsonArray
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
@@ -18,7 +17,7 @@ internal object Preferences {
             PreferenceManager.getDefaultSharedPreferences(context)
         var magnetic = false
         var fromNotation = false
-        var speedUnit : String = "m_per_min"
+        var speedUnit = "m_per_min"
         if (sharedPreferences != null) {
             magnetic = sharedPreferences.getBoolean("magnetic", false)
             fromNotation = sharedPreferences.getBoolean("from_notation", false)
@@ -48,11 +47,11 @@ internal object Preferences {
     fun addHistory (entry: JSONObject, context: Context, maxHistory:Int){
         val history = getHistory(context)
         var historyJson: JSONArray = try { JSONArray(history) } catch (e: JSONException) { JSONArray() }
-        historyJson = remoevOldEntries(historyJson,maxHistory)
+        historyJson = removeOldEntries(historyJson,maxHistory)
         historyJson.put(entry)
         saveHistory(historyJson.toString(),context)
     }
-    fun remoevOldEntries(ja: JSONArray, maxSize:Int):JSONArray{
+    fun removeOldEntries(ja: JSONArray, maxSize:Int):JSONArray{
         val ret = ja
         if (ret.length()>maxSize){
             for (i in 0..(ret.length()-maxSize-1)){
