@@ -3,6 +3,7 @@ package `in`.avimarine.seawatercurrentmeasure
 import android.content.Context
 import android.location.Location
 import org.json.JSONArray
+import org.json.JSONException
 import org.json.JSONObject
 
 /**
@@ -30,22 +31,25 @@ internal object HistoryDataSource {
     }
 
     fun getHistoryList(context: Context): List<History>{
-        val ja = JSONArray(Preferences.getHistory(context))
         val ret = ArrayList<History>()
-        for (i in 0 until ja.length()) {
-            val entry =  ja.getJSONObject(i)
-            val l1 = Location("")
-            l1.longitude = entry.getDouble("Lon1")
-            l1.latitude = entry.getDouble("Lat1")
-            l1.time = entry.getLong("time1")
-            val l2 = Location("")
-            l2.longitude = entry.getDouble("Lon2")
-            l2.latitude = entry.getDouble("Lat2")
-            l2.time = entry.getLong("time2")
-            val h = History(l1,l2, entry.getDouble("speed"), entry.getDouble("direction"))
-            ret.add(h)
+        try {
+            val ja = JSONArray(Preferences.getHistory(context))
+            for (i in 0 until ja.length()) {
+                val entry =  ja.getJSONObject(i)
+                val l1 = Location("")
+                l1.longitude = entry.getDouble("Lon1")
+                l1.latitude = entry.getDouble("Lat1")
+                l1.time = entry.getLong("time1")
+                val l2 = Location("")
+                l2.longitude = entry.getDouble("Lon2")
+                l2.latitude = entry.getDouble("Lat2")
+                l2.time = entry.getLong("time2")
+                val h = History(l1,l2, entry.getDouble("speed"), entry.getDouble("direction"))
+                ret.add(h)
+            }
+            return ret
+        } catch (e: JSONException) {
+            return ret
         }
-        return ret
-
     }
 }
