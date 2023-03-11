@@ -12,7 +12,7 @@
             android:id="@+id/dirTextView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="180"
+            android:hint="180"
             android:textSize="30sp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
@@ -22,7 +22,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
-            android:text="12 m/sec"
+            android:hint="12 m/sec"
             android:textSize="30sp"
             app:layout_constraintBottom_toBottomOf="@+id/dirTextView"
             app:layout_constraintStart_toEndOf="@id/dirTextView"
@@ -33,8 +33,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:text="12:45:22"
-            android:textSize="30sp"
+            android:hint="12:45:22"
+            android:textSize="20sp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/dirTextView" />
 
@@ -43,8 +43,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:text="32 45 N, 33 46 E"
-            android:textSize="30sp"
+            android:hint="32 45 N, 33 46 E"
+            android:textSize="20sp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/timeTextView" />
 </androidx.constraintlayout.widget.ConstraintLayout>

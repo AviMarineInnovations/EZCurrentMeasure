@@ -24,6 +24,11 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.google.android.gms.location.*
+import `in`.avimarine.androidutils.TAG
+import `in`.avimarine.androidutils.getDirString
+import `in`.avimarine.androidutils.getSpeed
+import `in`.avimarine.androidutils.getSpeedString
+import `in`.avimarine.androidutils.units.SpeedUnits
 import `in`.avimarine.seawatercurrentmeasure.databinding.ActivityMainBinding
 
 
@@ -148,7 +153,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun endMeasurement(
         location: Location,
-        speedUnit: String,
+        speedUnit: SpeedUnits,
         magnetic: Boolean,
         fromNotation: Boolean
     ) {

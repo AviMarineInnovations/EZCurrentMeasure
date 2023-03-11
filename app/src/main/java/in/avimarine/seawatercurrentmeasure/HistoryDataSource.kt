@@ -14,7 +14,7 @@ import org.json.JSONObject
 internal object HistoryDataSource {
     val MAX_HISTORY = 10
     /**
-     * Speed in metres per minute, dir in degrees
+     * Speed in knots, dir in degrees
      */
     fun addHistory(loc1:Location ,loc2:Location, spd: Double, dir: Double, context: Context){
         val m : HashMap<Any?, Any?> = HashMap ()

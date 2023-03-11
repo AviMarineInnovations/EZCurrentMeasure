@@ -19,28 +19,6 @@ import java.time.format.DateTimeFormatter
  * first created by aayaffe on 03/08/2019.
  */
 
-private val TAG = "Calculations"
-
-fun getDirString(dir: Double, magnetic: Boolean, fromNotation: Boolean, location: Location, time: Long): String {
-    var calcDir = dir
-    if (magnetic) {
-        val geomagneticField = GeomagneticField(
-            location.latitude.toFloat(),
-            location.longitude.toFloat(),
-            location.altitude.toFloat(),
-            time
-        )
-        Log.d(TAG, "Declination is: " + geomagneticField.declination)
-        calcDir += geomagneticField.declination
-    }
-    if (fromNotation) {
-        calcDir -= 180
-    }
-    if (calcDir < 0) {
-        calcDir += 360
-    }
-    return String.format("%03d", Math.round(calcDir)) + if (magnetic) " M" else ""
-}
 
 fun getDirErrorString(dir:Double):String{
     return String.format("%d", Math.round(dir))
@@ -52,21 +30,8 @@ fun toKnots(speed: Double): Double {
     return speed * 0.0323974
 }
 
-fun toMPerSec(speed: Double): Double {
-    return speed / 60
-}
 
-/**
- * Returns the speed in metres per minute
- * @param dist Distance in metres
- * @param firstTime start time in milliseconds
- * @param secondTime end time in millisecond
- * @return Speed in metres per minute
- */
-fun getSpeed(dist: Double, firstTime: Long, secondTime: Long): Double {
-    val duration = (secondTime - firstTime).toDouble() / (1000 * 60)
-    return dist / duration
-}
+
 
 private val geod = Geodesic.WGS84// This matches EPSG4326, which is the coordinate system used by Geolake
 
@@ -140,11 +105,3 @@ fun getDirError(firstLocation: Location, secondLocation: Location): Double {
     return res
 }
 
-/**
- * @return Speed in metres per minute
- */
-fun getSpdError(firstLocation: Location, secondLocation: Location): Double {
-    val dist = firstLocation.accuracy + secondLocation.accuracy;
-    val duration = (secondLocation.time - firstLocation.time).toDouble() / (1000 * 60)
-    return dist / duration
-}

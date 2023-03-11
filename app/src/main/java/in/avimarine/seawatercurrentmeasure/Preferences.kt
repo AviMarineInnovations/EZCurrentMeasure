@@ -2,6 +2,9 @@ package `in`.avimarine.seawatercurrentmeasure
 
 import android.content.Context
 import androidx.preference.PreferenceManager
+import `in`.avimarine.androidutils.find
+import `in`.avimarine.androidutils.findOrDefault
+import `in`.avimarine.androidutils.units.SpeedUnits
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
@@ -12,16 +15,16 @@ import org.json.JSONObject
  * first created by aayaffe on 27/12/2019.
  */
 internal object Preferences {
-    fun getPreferences(context: Context): Triple<Boolean, Boolean, String> {
+    fun getPreferences(context: Context): Triple<Boolean, Boolean, SpeedUnits> {
         val sharedPreferences =
             PreferenceManager.getDefaultSharedPreferences(context)
         var magnetic = false
         var fromNotation = false
-        var speedUnit = "m_per_min"
+        var speedUnit = SpeedUnits.MetersPerMinute
         if (sharedPreferences != null) {
             magnetic = sharedPreferences.getBoolean("magnetic", false)
             fromNotation = sharedPreferences.getBoolean("from_notation", false)
-            speedUnit = sharedPreferences.getString("speed_unit", "m_per_min").toString()
+            speedUnit = SpeedUnits::string.findOrDefault(sharedPreferences.getString("speed_unit", "m_per_min"),SpeedUnits.MetersPerMinute)
         }
         return Triple(magnetic, fromNotation, speedUnit)
     }
