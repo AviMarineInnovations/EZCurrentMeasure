@@ -162,7 +162,7 @@ class MainActivity : AppCompatActivity() {
         locationIntoTextViews(location, null, null, binding.textTime2)
         val dist = getDistance(firstLocation, secondLocation)
         var dir = getDirection(firstLocation, secondLocation)
-        val speed = getSpeed(dist,firstTime,secondTime)
+        val speed = getSpeed(dist,firstTime,secondTime, SpeedUnits.Knots)
         val dirErr = getDirError(firstLocation,secondLocation)
         binding.textSpdErr.text = "\u00B1" + getSpeedString(firstTime, secondTime,
             (firstLocation.accuracy+secondLocation.accuracy).toDouble(),speedUnit)
