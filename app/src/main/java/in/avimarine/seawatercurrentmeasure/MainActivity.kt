@@ -24,11 +24,9 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.google.android.gms.location.*
-import `in`.avimarine.androidutils.TAG
-import `in`.avimarine.androidutils.getDirString
-import `in`.avimarine.androidutils.getSpeed
-import `in`.avimarine.androidutils.getSpeedString
+import `in`.avimarine.androidutils.*
 import `in`.avimarine.androidutils.units.SpeedUnits
+import `in`.avimarine.seawatercurrentmeasure.Utils
 import `in`.avimarine.seawatercurrentmeasure.databinding.ActivityMainBinding
 
 
@@ -161,7 +159,7 @@ class MainActivity : AppCompatActivity() {
         secondTime = System.currentTimeMillis()
         locationIntoTextViews(location, null, null, binding.textTime2)
         val dist = getDistance(firstLocation, secondLocation)
-        var dir = getDirection(firstLocation, secondLocation)
+        val dir = getDirection(firstLocation, secondLocation)
         val speed = getSpeed(dist,firstTime,secondTime, SpeedUnits.Knots)
         val dirErr = getDirError(firstLocation,secondLocation)
         binding.textSpdErr.text = "\u00B1" + getSpeedString(firstTime, secondTime,

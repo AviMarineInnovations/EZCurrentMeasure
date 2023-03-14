@@ -9,6 +9,7 @@ import android.view.View
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.google.android.material.snackbar.Snackbar
+import `in`.avimarine.androidutils.TAG
 
 /**
  * This file is part of an
@@ -16,10 +17,7 @@ import com.google.android.material.snackbar.Snackbar
  * first created by aayaffe on 27/12/2019.
  */
 internal object Permissions {
-    val Any.TAG: String
-        get() {
-            return javaClass.simpleName
-        }
+
     val FINE_LOCATION_PERMISSIONS_REQUEST_CODE: Int = 12345
     val BACKGROUND_LOCATION_PERMISSIONS_REQUEST_CODE = 34;
 
