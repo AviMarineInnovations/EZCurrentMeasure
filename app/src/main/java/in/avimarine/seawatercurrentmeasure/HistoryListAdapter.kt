@@ -6,6 +6,7 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import `in`.avimarine.androidutils.getDirString
 import `in`.avimarine.androidutils.getSpeedString
+import `in`.avimarine.androidutils.timeStampToDateString
 import `in`.avimarine.seawatercurrentmeasure.databinding.HistoryRowItemBinding
 
 class HistoryListAdapter(private val dataSet: List<History>) :
@@ -37,7 +38,7 @@ class HistoryListAdapter(private val dataSet: List<History>) :
             val (magnetic, fromNotation, speedUnit) = Preferences.getPreferences(c)
             binding.dirTextView.text = getDirString(dataSet[position].dir, magnetic,fromNotation, dataSet[position].loc1, dataSet[position].loc1.time)
             binding.spdTextView.text = getSpeedString(dataSet[position].spd.convertTo(speedUnit).value, speedUnit)
-            binding.timeTextView.text = timeStamptoDateString(dataSet[position].loc1.time)
+            binding.timeTextView.text = timeStampToDateString(dataSet[position].loc1.time)
             binding.locationTextView.text = getShortLocation(dataSet[position].loc1)
         }
     }

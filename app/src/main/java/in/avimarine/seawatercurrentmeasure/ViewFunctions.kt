@@ -2,6 +2,7 @@ package `in`.avimarine.seawatercurrentmeasure
 
 import android.location.Location
 import android.widget.TextView
+import `in`.avimarine.androidutils.timeStampToDateString
 
 /**
  * This file is part of an
@@ -25,7 +26,7 @@ fun locationIntoTextViews(
     } else {
         lat_tv?.text = String.format("%.6f", loc.latitude)
         lon_tv?.text = String.format("%.6f", loc.longitude)
-        time_tv.text = timeStamptoDateString(loc.time)
+        time_tv.text = timeStampToDateString(loc.time)
         if (acc_tv != null)
             acc_tv.text = String.format("%.1f m", loc.accuracy)
     }

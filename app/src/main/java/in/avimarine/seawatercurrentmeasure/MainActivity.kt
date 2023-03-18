@@ -1,9 +1,5 @@
 package `in`.avimarine.seawatercurrentmeasure
 
-import `in`.avimarine.seawatercurrentmeasure.Permissions.BACKGROUND_LOCATION_PERMISSIONS_REQUEST_CODE
-import `in`.avimarine.seawatercurrentmeasure.Permissions.FINE_LOCATION_PERMISSIONS_REQUEST_CODE
-import `in`.avimarine.seawatercurrentmeasure.Permissions.askForPermissions
-import `in`.avimarine.seawatercurrentmeasure.Permissions.checkPermissions
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.*
@@ -25,15 +21,16 @@ import androidx.core.app.ActivityCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.google.android.gms.location.*
 import `in`.avimarine.androidutils.*
+import `in`.avimarine.androidutils.LocationPermissions.Companion.PERMISSIONS_REQUEST_LOCATION_UI
+import `in`.avimarine.androidutils.LocationPermissions.Companion.arePermissionsGranted
+import `in`.avimarine.androidutils.LocationPermissions.Companion.askForLocationPermission
 import `in`.avimarine.androidutils.units.SpeedUnits
-import `in`.avimarine.seawatercurrentmeasure.Utils
 import `in`.avimarine.seawatercurrentmeasure.databinding.ActivityMainBinding
 
 
 class MainActivity : AppCompatActivity() {
 
     private var inMeasurement = false
-    private var backgroundLocationPermissions: Boolean = false
     private var locationUpdates: Boolean = false
     private var appVisibility: Boolean = true
     private lateinit var countUpTimer: CountUpTimer
@@ -54,7 +51,7 @@ class MainActivity : AppCompatActivity() {
     private var autoFinishInterval: Long = 0
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationCallback: LocationCallback
-    private lateinit var binder : LocationUpdatesService.LocalBinder
+    private lateinit var binder: LocationUpdatesService.LocalBinder
     private lateinit var binding: ActivityMainBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -63,7 +60,11 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
         initForegroundService()
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
-        askForPermissions(this)
+        askForLocationPermission(
+            this,
+            PERMISSIONS_REQUEST_LOCATION_UI,
+            getString(R.string.permission_rationale)
+        )
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(locationResult: LocationResult) {
                 for (location in locationResult.locations) {
@@ -115,14 +116,23 @@ class MainActivity : AppCompatActivity() {
     fun startButtonClick(view: View) {
         val (magnetic, fromNotation, speedUnit) = Preferences.getPreferences(this)
         delayedStartInterval = Preferences.getDelayedStartInterval(this)
-        if (!checkPermissions(this)) {
-            Permissions.requestPermissions(this);
+        if (!arePermissionsGranted(this)) {
+            askForLocationPermission(
+                this,
+                PERMISSIONS_REQUEST_LOCATION_UI,
+                getString(R.string.permission_rationale)
+            )
         } else {
             mService?.requestLocationUpdates();
         }
-        if (askForPermissions(this)){
+        if (askForLocationPermission(
+                this,
+                PERMISSIONS_REQUEST_LOCATION_UI,
+                getString(R.string.permission_rationale)
+            )
+        ) {
             if (delayedStartInterval > 0 && firstTime == 0L) {
-                if (measurementState == MeasurementState.DELAYED_START){
+                if (measurementState == MeasurementState.DELAYED_START) {
                     measurementState = MeasurementState.STOPPED
                     resetMeasurmentState()
 
@@ -160,10 +170,12 @@ class MainActivity : AppCompatActivity() {
         locationIntoTextViews(location, null, null, binding.textTime2)
         val dist = getDistance(firstLocation, secondLocation)
         val dir = getDirection(firstLocation, secondLocation)
-        val speed = getSpeed(dist,firstTime,secondTime, SpeedUnits.Knots)
-        val dirErr = getDirError(firstLocation,secondLocation)
-        binding.textSpdErr.text = "\u00B1" + getSpeedString(firstTime, secondTime,
-            (firstLocation.accuracy+secondLocation.accuracy).toDouble(),speedUnit)
+        val speed = getSpeed(dist, firstTime, secondTime, SpeedUnits.Knots)
+        val dirErr = getDirError(firstLocation, secondLocation)
+        binding.textSpdErr.text = "\u00B1" + getSpeedString(
+            firstTime, secondTime,
+            (firstLocation.accuracy + secondLocation.accuracy).toDouble(), speedUnit
+        )
         binding.textSpeed.text = getSpeedString(firstTime, secondTime, dist, speedUnit)
 
         binding.textDir.text = getDirString(
@@ -176,7 +188,7 @@ class MainActivity : AppCompatActivity() {
         binding.textDirErr.text = "\u00B1" + getDirErrorString(
             dirErr
         )
-        HistoryDataSource.addHistory(firstLocation,secondLocation,speed, dir,this)
+        HistoryDataSource.addHistory(firstLocation, secondLocation, speed, dir, this)
         resetMeasurmentState()
 
     }
@@ -203,29 +215,24 @@ class MainActivity : AppCompatActivity() {
 
     private fun endMeasurement() {
         val (magnetic, fromNotation, speedUnit) = Preferences.getPreferences(this)
-        if (ActivityCompat.checkSelfPermission(
+        if (!askForLocationPermission(
                 this,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED
+                PERMISSIONS_REQUEST_LOCATION_UI,
+                getString(R.string.permission_rationale)
+            )
         ) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
             return
         }
-        fusedLocationClient.lastLocation
-            .addOnSuccessListener { location: Location? ->
-                if (location != null) {
-                    endMeasurement(location, speedUnit, magnetic, fromNotation)
+        try {
+            fusedLocationClient.lastLocation
+                .addOnSuccessListener { location: Location? ->
+                    if (location != null) {
+                        endMeasurement(location, speedUnit, magnetic, fromNotation)
+                    }
                 }
-            }
+        } catch (e: SecurityException) {
+            Log.e(TAG, "No permissions in startMeasurement", e)
+        }
     }
 
     private fun startMeasurement(location: Location) {
@@ -258,33 +265,28 @@ class MainActivity : AppCompatActivity() {
         }
         countUpTimer = CountUpButtonTimer(1000).start()
         inMeasurement = true
-        binder.updateTime(autoFinishInterval,delayedStartInterval,delayedStartTime,firstTime)
+        binder.updateTime(autoFinishInterval, delayedStartInterval, delayedStartTime, firstTime)
     }
 
     private fun startMeasurement() {
-        if (ActivityCompat.checkSelfPermission(
+        if (!askForLocationPermission(
                 this,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED
+                PERMISSIONS_REQUEST_LOCATION_UI,
+                getString(R.string.permission_rationale)
+            )
         ) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
             return
         }
-        fusedLocationClient.lastLocation
-            .addOnSuccessListener { location: Location? ->
-                if (location != null) {
-                    startMeasurement(location)
+        try {
+            fusedLocationClient.lastLocation
+                .addOnSuccessListener { location: Location? ->
+                    if (location != null) {
+                        startMeasurement(location)
+                    }
                 }
-            }
+        } catch (e: SecurityException) {
+            Log.e(TAG, "No permissions in startMeasurement", e)
+        }
     }
 
     override fun onRequestPermissionsResult(
@@ -293,7 +295,7 @@ class MainActivity : AppCompatActivity() {
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         when (requestCode) {
-            FINE_LOCATION_PERMISSIONS_REQUEST_CODE -> {
+            PERMISSIONS_REQUEST_LOCATION_UI -> {
                 // If request is cancelled, the result arrays are empty.
                 if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
                     // permission was granted, yay! Do the
@@ -302,28 +304,11 @@ class MainActivity : AppCompatActivity() {
                     val alertDialog = AlertDialog.Builder(this@MainActivity).create()
                     alertDialog.setTitle("Permissions")
                     alertDialog.setMessage("Location permission are required for this app to work.")
-                    alertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "OK",
-                        { dialog, which -> this.finish() })
+                    alertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "OK"
+                    ) { _, _ -> this.finish() }
                     alertDialog.show()
                 }
                 return
-            }
-
-            // Add other 'when' lines to check for other
-            // permissions this app might request.
-            BACKGROUND_LOCATION_PERMISSIONS_REQUEST_CODE -> {
-                if (grantResults.size <= 0) {
-                    // If user interaction was interrupted, the permission request is cancelled and you
-                    // receive empty arrays.
-                    Log.i(TAG, "User interaction was cancelled.")
-                } else if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    // Permission was granted.
-                    mService?.requestLocationUpdates()
-                    backgroundLocationPermissions = true
-                } else {
-                    // Permission denied.
-                    backgroundLocationPermissions = false
-                }
             }
             else -> {
                 // Ignore all other requests.
@@ -332,7 +317,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onPause() {
-//        LocalBroadcastManager.getInstance(this).unregisterReceiver(myReceiver);
         appVisibility = false
         if (!inMeasurement) {
             LocalBroadcastManager.getInstance(this).unregisterReceiver(myReceiver);
@@ -344,11 +328,13 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         appVisibility = true
         startLocationUpdates()
-        LocalBroadcastManager.getInstance(this).registerReceiver(myReceiver,
-            IntentFilter(LocationUpdatesService.ACTION_BROADCAST));
+        LocalBroadcastManager.getInstance(this).registerReceiver(
+            myReceiver,
+            IntentFilter(LocationUpdatesService.ACTION_BROADCAST)
+        );
     }
 
-    override fun onStart(){
+    override fun onStart() {
         super.onStart()
         // Bind to the service. If the service is in foreground mode, this signals to the service
         // that since this activity is in the foreground, the service can exit foreground mode.
@@ -401,7 +387,6 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-
     private fun formatButton(measurementState: MeasurementState, time: Long) {
         if (measurementState == MeasurementState.RUNNING) {
             binding.startBtn.setBackgroundResource(R.drawable.btn_rnd_red)
@@ -427,17 +412,25 @@ class MainActivity : AppCompatActivity() {
 
     // A reference to the service used to get location updates.
     private var mService: LocationUpdatesService? = null
+
     // Tracks the bound state of the service.
     private var mBound = false
+
     // The BroadcastReceiver used to listen from broadcasts from the service.
     private lateinit var myReceiver: MyReceiver
+
     // Monitors the state of the connection to the service.
     private val mServiceConnection = object : ServiceConnection {
 
         override fun onServiceConnected(name: ComponentName, service: IBinder) {
             binder = service as LocationUpdatesService.LocalBinder
             Log.d(TAG, "Binding")
-            binder.updateTime(autoFinishInterval,delayedStartInterval,delayedStartTime,firstTime)//https://stackoverflow.com/questions/9954878/android-pass-parameter-to-service-from-activity
+            binder.updateTime(
+                autoFinishInterval,
+                delayedStartInterval,
+                delayedStartTime,
+                firstTime
+            )//https://stackoverflow.com/questions/9954878/android-pass-parameter-to-service-from-activity
             mService = binder.service
             mBound = true
         }
@@ -447,13 +440,18 @@ class MainActivity : AppCompatActivity() {
             mBound = false
         }
     }
+
     private fun initForegroundService() {
         myReceiver = MyReceiver()
 //        setContentView(R.layout.activity_main);
 
         // Check that the user hasn't revoked permissions by going to Settings.
-        if (Utils.requestingLocationUpdates(this) && !checkPermissions(this)) {
-            Permissions.requestPermissions(this)
+        if (Utils.requestingLocationUpdates(this) && !arePermissionsGranted(this)) {
+            askForLocationPermission(
+                this,
+                PERMISSIONS_REQUEST_LOCATION_UI,
+                getString(R.string.permission_rationale)
+            )
         }
     }
 
@@ -462,8 +460,9 @@ class MainActivity : AppCompatActivity() {
      */
     inner class MyReceiver : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
-            val stopMeasurement = intent.getBooleanExtra(LocationUpdatesService.EXTRA_STOP_MEASUREMENT, false)
-            if (stopMeasurement){
+            val stopMeasurement =
+                intent.getBooleanExtra(LocationUpdatesService.EXTRA_STOP_MEASUREMENT, false)
+            if (stopMeasurement) {
                 resetMeasurmentState()
             }
             val location =
