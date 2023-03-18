@@ -8,6 +8,7 @@ import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
 
+
 /**
  * This file is part of an
  * Avi Marine Innovations project: SeaWaterCurrentMeasure
@@ -19,16 +20,16 @@ internal object HistoryDataSource {
      * Speed in knots, dir in degrees
      */
     fun addHistory(loc1:Location ,loc2:Location, spd: Speed, dir: Double, context: Context){
-        val m : HashMap<Any?, Any?> = HashMap ()
-        m.put("Lon1", loc1.longitude)
-        m.put("Lat1", loc1.latitude)
-        m.put("Lon2", loc2.longitude)
-        m.put("Lat2", loc2.latitude)
-        m.put("time1", loc1.time)
-        m.put("time2", loc2.time)
-        m.put("speed",spd)
-        m.put("direction",dir)
-        val o = JSONObject(m)
+        val m : HashMap<String, Any> = HashMap ()
+        m["Lon1"] = loc1.longitude
+        m["Lat1"] = loc1.latitude
+        m["Lon2"] = loc2.longitude
+        m["Lat2"] = loc2.latitude
+        m["time1"] = loc1.time
+        m["time2"] = loc2.time
+        m["speed"] = spd //TODO FIX: Return null when convert to JSON
+        m["direction"] = dir
+        val o = JSONObject(m as Map<*, *>)
         Preferences.addHistory(o,context,MAX_HISTORY)
     }
 
@@ -53,8 +54,11 @@ internal object HistoryDataSource {
                     is Int -> {
                         Speed(spd.toDouble(), SpeedUnits.MetersPerMinute)
                     }
+                    is Speed -> {
+                        spd
+                    }
                     else -> {
-                        spd as Speed
+                        continue
                     }
                 }
                 val h = History(l1,l2, speed, entry.getDouble("direction"))
