@@ -16,29 +16,30 @@ import org.json.JSONObject
  */
 internal object HistoryDataSource {
     private const val MAX_HISTORY = 10
+
     /**
      * Speed in knots, dir in degrees
      */
-    fun addHistory(loc1:Location ,loc2:Location, spd: Speed, dir: Double, context: Context){
-        val m : HashMap<String, Any> = HashMap ()
+    fun addHistory(loc1: Location, loc2: Location, spd: Speed, dir: Double, context: Context) {
+        val m: HashMap<String, Any> = HashMap()
         m["Lon1"] = loc1.longitude
         m["Lat1"] = loc1.latitude
         m["Lon2"] = loc2.longitude
         m["Lat2"] = loc2.latitude
         m["time1"] = loc1.time
         m["time2"] = loc2.time
-        m["speed"] = spd //TODO FIX: Return null when convert to JSON
+        m["speedKnots"] = spd.convertTo(SpeedUnits.Knots).value
         m["direction"] = dir
         val o = JSONObject(m as Map<*, *>)
-        Preferences.addHistory(o,context,MAX_HISTORY)
+        Preferences.addHistory(o, context, MAX_HISTORY)
     }
 
-    fun getHistoryList(context: Context): List<History>{
+    fun getHistoryList(context: Context): List<History> {
         val ret = ArrayList<History>()
         try {
             val ja = JSONArray(Preferences.getHistory(context))
             for (i in 0 until ja.length()) {
-                val entry =  ja.getJSONObject(i)
+                val entry = ja.getJSONObject(i)
                 val l1 = Location("")
                 l1.longitude = entry.getDouble("Lon1")
                 l1.latitude = entry.getDouble("Lat1")
@@ -47,22 +48,15 @@ internal object HistoryDataSource {
                 l2.longitude = entry.getDouble("Lon2")
                 l2.latitude = entry.getDouble("Lat2")
                 l2.time = entry.getLong("time2")
-                val speed = when (val spd = entry.get("speed")) {//Backward compatibility (was once saved only as m per min)
-                    is Double -> {
-                        Speed(spd.toDouble(), SpeedUnits.MetersPerMinute)
-                    }
-                    is Int -> {
-                        Speed(spd.toDouble(), SpeedUnits.MetersPerMinute)
-                    }
-                    is Speed -> {
-                        spd
-                    }
-                    else -> {
-                        continue
-                    }
+                if (entry.has("speedKnots")) {
+                    val spd = entry.getDouble("speedKnots")
+                    val h = History(l1, l2, Speed(spd, SpeedUnits.Knots), entry.getDouble("direction"))
+                    ret.add(h)
+                } else {
+                    val spd = entry.getDouble("speed")
+                    val h = History(l1, l2, Speed(spd, SpeedUnits.MetersPerMinute), entry.getDouble("direction"))
+                    ret.add(h)
                 }
-                val h = History(l1,l2, speed, entry.getDouble("direction"))
-                ret.add(h)
             }
             return ret
         } catch (e: JSONException) {
