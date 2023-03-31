@@ -26,6 +26,7 @@ import `in`.avimarine.androidutils.LocationPermissions.Companion.arePermissionsG
 import `in`.avimarine.androidutils.LocationPermissions.Companion.askForLocationPermission
 import `in`.avimarine.androidutils.units.SpeedUnits
 import `in`.avimarine.seawatercurrentmeasure.databinding.ActivityMainBinding
+import `in`.avimarine.seawatercurrentmeasure.databinding.ActivityMainNewBinding
 
 
 class MainActivity : AppCompatActivity() {
@@ -52,11 +53,11 @@ class MainActivity : AppCompatActivity() {
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationCallback: LocationCallback
     private lateinit var binder: LocationUpdatesService.LocalBinder
-    private lateinit var binding: ActivityMainBinding
+    private lateinit var binding: ActivityMainNewBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityMainBinding.inflate(layoutInflater)
+        binding = ActivityMainNewBinding.inflate(layoutInflater)
         setContentView(binding.root)
         initForegroundService()
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
@@ -72,10 +73,19 @@ class MainActivity : AppCompatActivity() {
                     lastLocationTime = location.time
                     locationIntoTextViews(
                         location,
-                        binding.textLastLat,
-                        binding.textLastLon,
-                        binding.textLastTime,
-                        binding.textLastAcc
+                        binding.textTime2,
+                        binding.gpsAccuracy
+                    )
+                }
+            }
+
+            override fun onLocationAvailability(locationAvailability: LocationAvailability) {
+                if (!locationAvailability.isLocationAvailable) {
+                    locationIntoTextViews(
+                        Location("a"),
+                        binding.textTime2,
+                        binding.gpsAccuracy,
+                        true
                     )
                 }
             }
@@ -167,7 +177,7 @@ class MainActivity : AppCompatActivity() {
     ) {
         secondLocation = location
         secondTime = System.currentTimeMillis()
-        locationIntoTextViews(location, null, null, binding.textTime2)
+        locationIntoTextViews(location, null, binding.gpsAccuracy)
         val dist = getDistance(firstLocation, secondLocation)
         val dir = getDirection(firstLocation, secondLocation)
         val speed = getSpeed(dist, firstTime, secondTime)
@@ -240,13 +250,11 @@ class MainActivity : AppCompatActivity() {
         firstLocation = location
         firstTime = System.currentTimeMillis()
         measurementState = MeasurementState.RUNNING
-        locationIntoTextViews(location, null, null, binding.textTime, null)
+        locationIntoTextViews(location, null,  binding.gpsAccuracy)
         locationIntoTextViews(
             location,
             null,
-            null,
-            binding.textTime2,
-            null,
+            binding.gpsAccuracy,
             true
         )
         binding.textSpeed.text = "?"

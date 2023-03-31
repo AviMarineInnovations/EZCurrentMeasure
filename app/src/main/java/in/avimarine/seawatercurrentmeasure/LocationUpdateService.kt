@@ -103,17 +103,12 @@ class LocationUpdatesService:Service() {
                     activityPendingIntent)
                 .addAction(R.drawable.ic_cancel, getString(R.string.stop_measurement),
                     servicePendingIntent)
-//                .setContentText(text)
                 .setContentTitle(Utils.getLocationTitle(this,StartTime , AutoFinishInterval, delayedStartTime, autoStartInterval))
                 .setOngoing(true)
                 .setPriority(NotificationCompat.PRIORITY_MAX)
                 .setSmallIcon(R.mipmap.ic_launcher)
                 .setTicker(text)
                 .setWhen(System.currentTimeMillis())
-//            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-//            {
-//                builder.setChannelId(CHANNEL_ID)
-//            }
             return builder.build()
         }
     override fun onCreate() {

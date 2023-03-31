@@ -1,7 +1,9 @@
 package `in`.avimarine.seawatercurrentmeasure
 
 import android.location.Location
+import android.widget.ImageView
 import android.widget.TextView
+import `in`.avimarine.androidutils.getGPSReceptionDrawable
 import `in`.avimarine.androidutils.timeStampToDateString
 
 /**
@@ -11,24 +13,16 @@ import `in`.avimarine.androidutils.timeStampToDateString
  */
 fun locationIntoTextViews(
     loc: Location,
-    lat_tv: TextView?,
-    lon_tv: TextView?,
-    time_tv: TextView,
-    acc_tv: TextView? = null,
+    time_tv: TextView?,
+    gps: ImageView,
     empty: Boolean = false
 ) {
     if (empty) {
-        lat_tv?.text = "?"
-        lon_tv?.text = "?"
-        time_tv.text = "?"
-        if (acc_tv != null)
-            acc_tv.text = "?"
+        time_tv?.text = "?"
+        gps.setImageResource(getGPSReceptionDrawable(loc))
     } else {
-        lat_tv?.text = String.format("%.6f", loc.latitude)
-        lon_tv?.text = String.format("%.6f", loc.longitude)
-        time_tv.text = timeStampToDateString(loc.time)
-        if (acc_tv != null)
-            acc_tv.text = String.format("%.1f m", loc.accuracy)
+        time_tv?.text = timeStampToDateString(loc.time)
+        gps.setImageResource(R.drawable.gps_reception_0_bars)
     }
 }
 
