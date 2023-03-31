@@ -9,7 +9,7 @@ import `in`.avimarine.androidutils.getSpeedString
 import `in`.avimarine.androidutils.timeStampToDateString
 import `in`.avimarine.seawatercurrentmeasure.databinding.HistoryRowItemBinding
 
-class HistoryListAdapter(private val dataSet: List<History>) :
+class HistoryListAdapter(private val dataSet: List<Measurement>) :
     RecyclerView.Adapter<HistoryListAdapter.ViewHolder>() {
 
 
@@ -36,7 +36,7 @@ class HistoryListAdapter(private val dataSet: List<History>) :
         with(viewHolder) {
             val c = binding.spdTextView.context
             val (magnetic, fromNotation, speedUnit) = Preferences.getPreferences(c)
-            binding.dirTextView.text = getDirString(dataSet[position].dir, magnetic,fromNotation, dataSet[position].loc1, dataSet[position].loc1.time)
+            binding.dirTextView.text = getDirString(dataSet[position].dir, magnetic,fromNotation, dataSet[position].loc1)
             binding.spdTextView.text = getSpeedString(dataSet[position].spd, speedUnit)
             binding.timeTextView.text = timeStampToDateString(dataSet[position].loc1.time)
             binding.locationTextView.text = getShortLocation(dataSet[position].loc1)

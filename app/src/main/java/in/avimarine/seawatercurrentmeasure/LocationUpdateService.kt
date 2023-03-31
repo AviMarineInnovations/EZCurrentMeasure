@@ -277,7 +277,7 @@ class LocationUpdatesService:Service() {
      * Class used for the client Binder. Since this service runs in the same process as its
      * clients, we don't need to deal with IPC.
      */
-    inner class LocalBinder:iForegroundServiceBinder,Binder() {
+    inner class LocalBinder:ForegroundServiceBinder,Binder() {
         override public fun updateTime(autoFinishInterval: Long, delayedStartInterval: Long, delayedStartT: Long, startTime: Long) {
             Log.d(TAG,"Autofinishinterval: " + autoFinishInterval + " Starttime: " + startTime)
             AutoFinishInterval = autoFinishInterval

@@ -25,8 +25,9 @@ import `in`.avimarine.androidutils.LocationPermissions.Companion.PERMISSIONS_REQ
 import `in`.avimarine.androidutils.LocationPermissions.Companion.arePermissionsGranted
 import `in`.avimarine.androidutils.LocationPermissions.Companion.askForLocationPermission
 import `in`.avimarine.androidutils.units.SpeedUnits
-import `in`.avimarine.seawatercurrentmeasure.databinding.ActivityMainBinding
 import `in`.avimarine.seawatercurrentmeasure.databinding.ActivityMainNewBinding
+import `in`.avimarine.seawatercurrentmeasure.ui.GPSViewModel
+import `in`.avimarine.seawatercurrentmeasure.ui.MainViewModel
 
 
 class MainActivity : AppCompatActivity() {
@@ -71,11 +72,7 @@ class MainActivity : AppCompatActivity() {
                 for (location in locationResult.locations) {
                     lastLocation = location
                     lastLocationTime = location.time
-                    locationIntoTextViews(
-                        location,
-                        binding.textTime2,
-                        binding.gpsAccuracy
-                    )
+                    binding.gps = GPSViewModel(location)
                 }
             }
 
@@ -169,6 +166,15 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun updateUI(measurement: Measurement, measurementError: Boolean = false){
+        if (measurementError) {
+            binding.viewmodel = null
+            return
+        }
+        val (magnetic, fromNotation, speedUnit) = Preferences.getPreferences(this)
+        binding.viewmodel = MainViewModel(measurement, magnetic, fromNotation, speedUnit )
+    }
+
     private fun endMeasurement(
         location: Location,
         speedUnit: SpeedUnits,
@@ -178,27 +184,15 @@ class MainActivity : AppCompatActivity() {
         secondLocation = location
         secondTime = System.currentTimeMillis()
         locationIntoTextViews(location, null, binding.gpsAccuracy)
-        val dist = getDistance(firstLocation, secondLocation)
-        val dir = getDirection(firstLocation, secondLocation)
-        val speed = getSpeed(dist, firstTime, secondTime)
-        val dirErr = getDirError(firstLocation, secondLocation)
-        binding.textSpdErr.text = "\u00B1" + getSpeedString(
-            firstTime, secondTime,
-            (firstLocation.accuracy + secondLocation.accuracy).toDouble(), speedUnit
-        )
-        binding.textSpeed.text = getSpeedString(firstTime, secondTime, dist, speedUnit)
+        val measurement = Measurement(firstLocation, secondLocation)
+        if (measurement.spd.value.isNaN()){
+            updateUI(measurement, measurementError = true)
+            resetMeasurmentState()
+            return
+        }
 
-        binding.textDir.text = getDirString(
-            dir,
-            magnetic,
-            fromNotation,
-            secondLocation,
-            secondTime
-        )
-        binding.textDirErr.text = "\u00B1" + getDirErrorString(
-            dirErr
-        )
-        HistoryDataSource.addHistory(firstLocation, secondLocation, speed, dir, this)
+        updateUI(measurement)
+        HistoryDataSource.addHistory(measurement, this)
         resetMeasurmentState()
 
     }

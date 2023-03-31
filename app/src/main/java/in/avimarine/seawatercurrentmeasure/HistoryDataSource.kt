@@ -2,6 +2,7 @@ package `in`.avimarine.seawatercurrentmeasure
 
 import android.content.Context
 import android.location.Location
+import `in`.avimarine.androidutils.geo.Direction
 import `in`.avimarine.androidutils.geo.Speed
 import `in`.avimarine.androidutils.units.SpeedUnits
 import org.json.JSONArray
@@ -17,10 +18,18 @@ import org.json.JSONObject
 internal object HistoryDataSource {
     private const val MAX_HISTORY = 10
 
+
+    fun addHistory(measurement: Measurement, context: Context) {
+        addHistory(measurement.loc1,
+                measurement.loc2,
+                measurement.spd,
+                measurement.dir,
+                context)
+    }
     /**
      * Speed in knots, dir in degrees
      */
-    fun addHistory(loc1: Location, loc2: Location, spd: Speed, dir: Double, context: Context) {
+    fun addHistory(loc1: Location, loc2: Location, spd: Speed, dir: Direction, context: Context) {
         val m: HashMap<String, Any> = HashMap()
         m["Lon1"] = loc1.longitude
         m["Lat1"] = loc1.latitude
@@ -29,13 +38,13 @@ internal object HistoryDataSource {
         m["time1"] = loc1.time
         m["time2"] = loc2.time
         m["speedKnots"] = spd.convertTo(SpeedUnits.Knots).value
-        m["direction"] = dir
+        m["direction"] = dir.value
         val o = JSONObject(m as Map<*, *>)
         Preferences.addHistory(o, context, MAX_HISTORY)
     }
 
-    fun getHistoryList(context: Context): List<History> {
-        val ret = ArrayList<History>()
+    fun getHistoryList(context: Context): List<Measurement> {
+        val ret = ArrayList<Measurement>()
         try {
             val ja = JSONArray(Preferences.getHistory(context))
             for (i in 0 until ja.length()) {
@@ -50,11 +59,11 @@ internal object HistoryDataSource {
                 l2.time = entry.getLong("time2")
                 if (entry.has("speedKnots")) {
                     val spd = entry.getDouble("speedKnots")
-                    val h = History(l1, l2, Speed(spd, SpeedUnits.Knots), entry.getDouble("direction"))
+                    val h = Measurement(l1, l2, Speed(spd, SpeedUnits.Knots), Direction(entry.getDouble("direction")))
                     ret.add(h)
                 } else {
                     val spd = entry.getDouble("speed")
-                    val h = History(l1, l2, Speed(spd, SpeedUnits.MetersPerMinute), entry.getDouble("direction"))
+                    val h = Measurement(l1, l2, Speed(spd, SpeedUnits.MetersPerMinute), Direction(entry.getDouble("direction")))
                     ret.add(h)
                 }
             }
