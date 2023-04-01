@@ -185,7 +185,7 @@ class MainActivity : AppCompatActivity() {
         secondTime = System.currentTimeMillis()
         locationIntoTextViews(location, null, binding.gpsAccuracy)
         val measurement = Measurement(firstLocation, secondLocation)
-        if (measurement.spd.value.isNaN()){
+        if (measurement.spd.getValue(speedUnit).isNaN()){
             updateUI(measurement, measurementError = true)
             resetMeasurmentState()
             return

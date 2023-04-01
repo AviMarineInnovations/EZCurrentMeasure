@@ -37,7 +37,7 @@ internal object HistoryDataSource {
         m["Lat2"] = loc2.latitude
         m["time1"] = loc1.time
         m["time2"] = loc2.time
-        m["speedKnots"] = spd.convertTo(SpeedUnits.Knots).value
+        m["speedKnots"] = spd.getValue(SpeedUnits.Knots)
         m["direction"] = dir.value
         val o = JSONObject(m as Map<*, *>)
         Preferences.addHistory(o, context, MAX_HISTORY)
