@@ -2,6 +2,7 @@ package `in`.avimarine.seawatercurrentmeasure
 
 import android.content.Context
 import android.location.Location
+import `in`.avimarine.androidutils.createLocation
 import `in`.avimarine.androidutils.geo.Direction
 import `in`.avimarine.androidutils.geo.Speed
 import `in`.avimarine.androidutils.units.SpeedUnits
@@ -38,7 +39,7 @@ internal object HistoryDataSource {
         m["time1"] = loc1.time
         m["time2"] = loc2.time
         m["speedKnots"] = spd.getValue(SpeedUnits.Knots)
-        m["direction"] = dir.value
+        m["direction"] = dir.getTrueValue()
         val o = JSONObject(m as Map<*, *>)
         Preferences.addHistory(o, context, MAX_HISTORY)
     }
@@ -59,11 +60,13 @@ internal object HistoryDataSource {
                 l2.time = entry.getLong("time2")
                 if (entry.has("speedKnots")) {
                     val spd = entry.getDouble("speedKnots")
-                    val h = Measurement(l1, l2, Speed(spd, SpeedUnits.Knots), Direction(entry.getDouble("direction")))
+                    val h = Measurement(l1, l2, Speed(spd, SpeedUnits.Knots), Direction(entry.getDouble("direction"),
+                        l2
+                    ))
                     ret.add(h)
                 } else {
                     val spd = entry.getDouble("speed")
-                    val h = Measurement(l1, l2, Speed(spd, SpeedUnits.MetersPerMinute), Direction(entry.getDouble("direction")))
+                    val h = Measurement(l1, l2, Speed(spd, SpeedUnits.MetersPerMinute), Direction(entry.getDouble("direction"),l2))
                     ret.add(h)
                 }
             }
