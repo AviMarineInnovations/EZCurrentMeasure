@@ -30,7 +30,7 @@ internal object HistoryDataSource {
     /**
      * Speed in knots, dir in degrees
      */
-    fun addHistory(loc1: Location, loc2: Location, spd: Speed, dir: Direction, context: Context) {
+    private fun addHistory(loc1: Location, loc2: Location, spd: Speed, dir: Direction, context: Context) {
         val m: HashMap<String, Any> = HashMap()
         m["Lon1"] = loc1.longitude
         m["Lat1"] = loc1.latitude

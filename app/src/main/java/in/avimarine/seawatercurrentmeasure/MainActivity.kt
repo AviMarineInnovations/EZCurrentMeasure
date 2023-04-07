@@ -24,10 +24,12 @@ import `in`.avimarine.androidutils.*
 import `in`.avimarine.androidutils.LocationPermissions.Companion.PERMISSIONS_REQUEST_LOCATION_UI
 import `in`.avimarine.androidutils.LocationPermissions.Companion.arePermissionsGranted
 import `in`.avimarine.androidutils.LocationPermissions.Companion.askForLocationPermission
+import `in`.avimarine.androidutils.geo.Speed
 import `in`.avimarine.androidutils.units.SpeedUnits
 import `in`.avimarine.seawatercurrentmeasure.databinding.ActivityMainNewBinding
 import `in`.avimarine.seawatercurrentmeasure.ui.GPSViewModel
 import `in`.avimarine.seawatercurrentmeasure.ui.MainViewModel
+import java.lang.Math.floor
 
 
 class MainActivity : AppCompatActivity() {
@@ -80,7 +82,7 @@ class MainActivity : AppCompatActivity() {
                 if (!locationAvailability.isLocationAvailable) {
                     locationIntoTextViews(
                         Location("a"),
-                        binding.textTime2,
+                        binding.textTime,
                         binding.gpsAccuracy,
                         true
                     )
@@ -190,7 +192,6 @@ class MainActivity : AppCompatActivity() {
             resetMeasurmentState()
             return
         }
-
         updateUI(measurement)
         HistoryDataSource.addHistory(measurement, this)
         resetMeasurmentState()

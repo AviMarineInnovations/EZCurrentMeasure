@@ -27,10 +27,8 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
                 android:text="@{viewmodel!=null ? viewmodel.getDirectionError : `?`}"
-                app:layout_constraintBottom_toBottomOf="@+id/text_direrror_label"
-                app:layout_constraintStart_toEndOf="@+id/text_direrror_label"
-                app:layout_constraintTop_toTopOf="@+id/text_direrror_label"
-                app:layout_constraintVertical_bias="1.0" />
+                app:layout_constraintStart_toEndOf="@+id/divider"
+                app:layout_constraintTop_toBottomOf="@+id/text_dir" />
 
         <TextView
                 android:id="@+id/text_spd_err"
@@ -38,52 +36,19 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
                 android:text="@{viewmodel!=null ? viewmodel.getSpeedError : `?`}"
-                app:layout_constraintBottom_toBottomOf="@+id/text_spderror_label"
-                app:layout_constraintStart_toEndOf="@+id/text_spderror_label"
-                app:layout_constraintTop_toTopOf="@+id/text_spderror_label"
-                app:layout_constraintVertical_bias="0.53" />
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/text_speed" />
 
         <TextView
-                android:id="@+id/text_time2_label"
+                android:id="@+id/text_time"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:text=" Time:"
-                android:textStyle="bold"
-                app:layout_constraintStart_toStartOf="@+id/text_spderror_label"
-                app:layout_constraintTop_toBottomOf="@+id/text_spderror_label" />
-
-        <TextView
-                android:id="@+id/text_time2"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
                 android:layout_marginStart="16dp"
+                android:textSize="25sp"
                 android:text="@{viewmodel!=null ? viewmodel.getMeasurementEndTime : `?`}"
-                app:layout_constraintBottom_toBottomOf="@+id/text_time2_label"
-                app:layout_constraintStart_toEndOf="@+id/text_time2_label"
-                app:layout_constraintTop_toTopOf="@+id/text_time2_label" />
-
-        <TextView
-                android:id="@+id/text_direrror_label"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="16dp"
-                android:layout_marginTop="16dp"
-                android:text=" Dir Err:"
-                android:textStyle="bold"
-                app:layout_constraintStart_toEndOf="@+id/divider6"
-                app:layout_constraintTop_toBottomOf="@+id/divider" />
-
-        <TextView
-                android:id="@+id/text_spderror_label"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="16dp"
-                android:layout_marginTop="16dp"
-                android:text=" Speed Err:"
-                android:textStyle="bold"
-                app:layout_constraintStart_toEndOf="@+id/divider6"
-                app:layout_constraintTop_toBottomOf="@+id/text_direrror_label" />
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/divider5" />
 
         <TextView
                 android:id="@+id/text_dir_label"
@@ -107,6 +72,28 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/divider4" />
 
+        <TextView
+                android:id="@+id/text_speed_units"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="16dp"
+                android:text="@{viewmodel!=null ? viewmodel.getSpeedUnits : `?`}"
+                android:textStyle="bold"
+                app:layout_constraintBottom_toBottomOf="@+id/text_speed_label"
+                app:layout_constraintEnd_toStartOf="@+id/divider"
+                app:layout_constraintTop_toTopOf="@+id/text_speed_label" />
+
+        <TextView
+                android:id="@+id/text_dir_units"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="16dp"
+                android:text="@{viewmodel!=null ? viewmodel.getDirUnits : `?`}"
+                android:textStyle="bold"
+                app:layout_constraintBottom_toBottomOf="@+id/text_dir_label"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="@+id/text_dir_label" />
+
 
         <Button
                 android:id="@+id/start_btn"
@@ -114,26 +101,27 @@
                 android:layout_height="0dp"
                 android:layout_marginStart="32dp"
                 android:layout_marginTop="32dp"
-                android:layout_marginEnd="32dp"
                 android:layout_marginBottom="32dp"
+                android:layout_marginEnd="32dp"
                 android:background="@drawable/btn_rnd_grn"
                 android:onClick="startButtonClick"
                 android:text="Start"
                 android:textAllCaps="false"
                 android:textSize="18sp"
-                app:layout_constraintBottom_toTopOf="@+id/textView3"
+                app:layout_constraintBottom_toTopOf="@+id/gps_accuracy"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/text_time2_label" />
+                app:layout_constraintTop_toBottomOf="@+id/text_time" />
 
         <TextView
                 android:id="@+id/text_dir"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
-                android:layout_marginTop="8dp"
+                android:layout_marginTop="0dp"
                 android:text="@{viewmodel!=null ? viewmodel.getCurrentDirection : `?`}"
-                android:textSize="30sp"
+                android:textSize="60sp"
+                app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toEndOf="@+id/divider"
                 app:layout_constraintTop_toBottomOf="@+id/text_dir_label" />
 
@@ -142,23 +130,21 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
-                android:layout_marginTop="8dp"
+                android:layout_marginTop="0dp"
                 android:text="@{viewmodel!=null ? viewmodel.getCurrentSpeed : `?`}"
-                android:textSize="30sp"
+                android:textSize="60sp"
+                app:layout_constraintEnd_toStartOf="@+id/divider"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/text_speed_label" />
 
         <TextView
-                android:id="@+id/textView3"
+                android:id="@+id/lable_down_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
-                android:layout_marginEnd="8dp"
-                android:layout_marginBottom="16dp"
                 android:text="(You can also use volume down key)"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintHorizontal_bias="0.506"
+                app:layout_constraintBottom_toBottomOf="@id/gps_accuracy"
+                app:layout_constraintTop_toTopOf="@id/gps_accuracy"
                 app:layout_constraintStart_toStartOf="parent" />
 
         <View
@@ -171,7 +157,7 @@
                 android:background="?android:attr/listDivider"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/gps_accuracy" />
+                app:layout_constraintTop_toTopOf="parent" />
 
         <View
                 android:id="@+id/divider5"
@@ -183,20 +169,7 @@
                 android:background="?android:attr/listDivider"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/text_dir" />
-
-        <View
-                android:id="@+id/divider6"
-                android:layout_width="1dp"
-                android:layout_height="0dp"
-                android:layout_marginBottom="16dp"
-                android:background="?android:attr/listDivider"
-                app:layout_constraintBottom_toTopOf="@+id/start_btn"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintHorizontal_bias="0.48"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/divider5"
-                app:layout_constraintVertical_bias="1.0" />
+                app:layout_constraintTop_toBottomOf="@+id/text_spd_err" />
 
         <View
                 android:id="@+id/divider"
@@ -213,11 +186,12 @@
                 android:id="@+id/gps_accuracy"
                 android:layout_width="50dp"
                 android:layout_height="50dp"
-                android:layout_marginTop="8dp"
+                android:layout_marginBottom="8dp"
                 android:layout_marginEnd="8dp"
+                app:imageResource="@{gps!=null ? gps.getGPSAccuracy : R.drawable.gps_reception_0_bars}"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:imageResource="@{gps!=null ? gps.getGPSAccuracy : R.drawable.gps_reception_0_bars}" />
+                app:layout_constraintStart_toEndOf="@id/lable_down_button"
+                app:layout_constraintBottom_toBottomOf="parent"/>
 
 
     </androidx.constraintlayout.widget.ConstraintLayout>
