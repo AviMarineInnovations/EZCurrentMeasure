@@ -1,12 +1,12 @@
 package `in`.avimarine.seawatercurrentmeasure
 
+import android.icu.text.DateFormat
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import `in`.avimarine.androidutils.getDirString
 import `in`.avimarine.androidutils.getSpeedString
-import `in`.avimarine.androidutils.timeStampToDateString
 import `in`.avimarine.seawatercurrentmeasure.databinding.HistoryRowItemBinding
 
 class HistoryListAdapter(private val dataSet: List<Measurement>) :
@@ -38,12 +38,17 @@ class HistoryListAdapter(private val dataSet: List<Measurement>) :
             val (magnetic, fromNotation, speedUnit) = Preferences.getPreferences(c)
             binding.dirTextView.text = getDirString(dataSet[position].dir, magnetic,fromNotation, dataSet[position].loc1)
             binding.spdTextView.text = getSpeedString(dataSet[position].spd, speedUnit)
-            binding.timeTextView.text = timeStampToDateString(dataSet[position].loc1.time)
+//            binding.timeTextView.text = timeStampToDateString(dataSet[position].loc1.time)
+            binding.timeTextView.text = getShortDateFormat(dataSet[position].loc1.time)
             binding.locationTextView.text = getShortLocation(dataSet[position].loc1)
         }
     }
 
     // Return the size of your dataset (invoked by the layout manager)
     override fun getItemCount() = dataSet.size
+
+    fun getShortDateFormat(date: Long) : String{
+        return DateFormat.getInstance().format(date)
+    }
 
 }

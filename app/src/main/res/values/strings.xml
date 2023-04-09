@@ -8,4 +8,6 @@
         functionality.</string>
     <string name="ok">OK</string>
     <string name="title_activity_history">History</string>
+    <string name="direction_label">Direction:</string>
+    <string name="speed_label">Speed:</string>
 </resources>

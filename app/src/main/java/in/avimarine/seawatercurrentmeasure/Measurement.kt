@@ -5,6 +5,7 @@ import `in`.avimarine.androidutils.*
 import `in`.avimarine.androidutils.geo.Direction
 import `in`.avimarine.androidutils.geo.Speed
 import `in`.avimarine.androidutils.units.SpeedUnits
+import kotlin.math.floor
 
 data class Measurement(
     val loc1: Location,
@@ -23,4 +24,12 @@ data class Measurement(
                 getSpeedError(loc1, loc2),
                 getDirError(loc1, loc2)
             )
+
+    fun isError(): Boolean{
+        return spd.isNaN()
+    }
+
+    fun isCurrentSpeedValid(): Boolean{
+        return spd.getValue(SpeedUnits.Knots) <= 30
+    }
 }

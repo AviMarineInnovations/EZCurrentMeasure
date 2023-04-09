@@ -70,7 +70,7 @@ internal object HistoryDataSource {
                     ret.add(h)
                 }
             }
-            return ret
+            return ret.reversed()
         } catch (e: JSONException) {
             return ret
         }

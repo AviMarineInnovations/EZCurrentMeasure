@@ -25,7 +25,7 @@ class MainViewModel(
     }
 
     fun getCurrentSpeed(): String{
-        if (measurement.spd.getValue(SpeedUnits.Knots)>30){
+        if (!measurement.isCurrentSpeedValid()){
             val maxSpeed = Speed(30.0, SpeedUnits.Knots)
             return ">" + floor(maxSpeed.getValue(speedUnit)).toInt().toString()
         }
@@ -48,15 +48,6 @@ class MainViewModel(
         return timeStampToDateString(measurement.loc2.time)
     }
 
-    fun getSpeedUnits():String {
-        return SpeedUnits.getSpeedUnitShortDisplayName(speedUnit)
-    }
-    fun getDirUnits():String {
-        return if (magnetic) {
-            "\u00B0 M"
-        } else {
-            "\u00B0"
-        }
-    }
+
 
 }

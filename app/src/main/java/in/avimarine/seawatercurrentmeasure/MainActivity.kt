@@ -4,6 +4,7 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.*
 import android.content.pm.PackageManager
+import android.graphics.Color
 import android.location.Location
 import android.os.Bundle
 import android.os.CountDownTimer
@@ -29,6 +30,7 @@ import `in`.avimarine.androidutils.units.SpeedUnits
 import `in`.avimarine.seawatercurrentmeasure.databinding.ActivityMainNewBinding
 import `in`.avimarine.seawatercurrentmeasure.ui.GPSViewModel
 import `in`.avimarine.seawatercurrentmeasure.ui.MainViewModel
+import `in`.avimarine.seawatercurrentmeasure.ui.UnitsViewModel
 import java.lang.Math.floor
 
 
@@ -57,6 +59,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var locationCallback: LocationCallback
     private lateinit var binder: LocationUpdatesService.LocalBinder
     private lateinit var binding: ActivityMainNewBinding
+    private var lastMeasurement: Measurement? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -168,12 +171,13 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun updateUI(measurement: Measurement, measurementError: Boolean = false){
-        if (measurementError) {
+    private fun updateUI(measurement: Measurement?, measurementError: Boolean = false){
+        val (magnetic, fromNotation, speedUnit) = Preferences.getPreferences(this)
+        binding.units = UnitsViewModel(speedUnit, magnetic)
+        if (measurementError || measurement == null) {
             binding.viewmodel = null
             return
         }
-        val (magnetic, fromNotation, speedUnit) = Preferences.getPreferences(this)
         binding.viewmodel = MainViewModel(measurement, magnetic, fromNotation, speedUnit )
     }
 
@@ -186,16 +190,18 @@ class MainActivity : AppCompatActivity() {
         secondLocation = location
         secondTime = System.currentTimeMillis()
         locationIntoTextViews(location, null, binding.gpsAccuracy)
-        val measurement = Measurement(firstLocation, secondLocation)
-        if (measurement.spd.getValue(speedUnit).isNaN()){
-            updateUI(measurement, measurementError = true)
+        lastMeasurement = Measurement(firstLocation, secondLocation)
+
+        if (lastMeasurement!!.spd.isNaN()){
+            updateUI(lastMeasurement!!, measurementError = true)
             resetMeasurmentState()
             return
         }
-        updateUI(measurement)
-        HistoryDataSource.addHistory(measurement, this)
+        if (lastMeasurement!!.isCurrentSpeedValid()) {
+            HistoryDataSource.addHistory(lastMeasurement!!, this)
+        }
+        updateUI(lastMeasurement!!)
         resetMeasurmentState()
-
     }
 
     private fun resetMeasurmentState() {
@@ -252,10 +258,10 @@ class MainActivity : AppCompatActivity() {
             binding.gpsAccuracy,
             true
         )
-        binding.textSpeed.text = "?"
-        binding.textDir.text = "?"
-        binding.textDirErr.text = "?"
-        binding.textSpdErr.text = "?"
+//        binding.textSpeed.text = "?"
+//        binding.textDir.text = "?"
+//        binding.textDirErr.text = "?"
+//        binding.textSpdErr.text = "?"
         if (::countDownToStartTimer.isInitialized) {
             countDownToStartTimer.cancel();
         }
@@ -345,6 +351,7 @@ class MainActivity : AppCompatActivity() {
             Intent(this, LocationUpdatesService::class.java), mServiceConnection,
             Context.BIND_AUTO_CREATE
         )
+        updateUI(lastMeasurement, lastMeasurement?.isError()?:false)
     }
 
     override fun onStop() {
@@ -394,12 +401,15 @@ class MainActivity : AppCompatActivity() {
         if (measurementState == MeasurementState.RUNNING) {
             binding.startBtn.setBackgroundResource(R.drawable.btn_rnd_red)
             binding.startBtn.setText("STOP\n" + getTimerString(time))
+            binding.startBtn.setTextColor(Color.WHITE)
         } else if (measurementState == MeasurementState.STOPPED) {
             binding.startBtn.setBackgroundResource(R.drawable.btn_rnd_grn)
             binding.startBtn.setText("START")
+            binding.startBtn.setTextColor(Color.WHITE)
         } else if (measurementState == MeasurementState.DELAYED_START) {
             binding.startBtn.setBackgroundResource(R.drawable.btn_rnd_ylw)
             binding.startBtn.setText("Start in\n" + getTimerString(time))
+            binding.startBtn.setTextColor(Color.BLACK)
         } else if (measurementState == MeasurementState.RUNNING_AUTO_FINISH) {
             binding.startBtn.setBackgroundResource(R.drawable.btn_rnd_blue)
             binding.startBtn.setText(
@@ -407,6 +417,7 @@ class MainActivity : AppCompatActivity() {
                     autoFinishInterval - time
                 )
             )
+            binding.startBtn.setTextColor(Color.WHITE)
         }
 
     }
