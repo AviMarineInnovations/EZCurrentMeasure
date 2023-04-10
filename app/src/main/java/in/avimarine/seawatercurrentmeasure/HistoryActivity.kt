@@ -23,8 +23,5 @@ class HistoryActivity : AppCompatActivity() {
             resources.configuration.orientation
         )
         recyclerView.addItemDecoration(dividerItemDecoration)
-
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
     }
-
 }

@@ -93,6 +93,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
         startLocationUpdates()
+        lastMeasurement = HistoryDataSource.getLastMeasurements(this)
     }
 
 

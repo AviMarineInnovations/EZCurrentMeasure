@@ -2,7 +2,6 @@ package `in`.avimarine.seawatercurrentmeasure
 
 import android.content.Context
 import android.location.Location
-import `in`.avimarine.androidutils.createLocation
 import `in`.avimarine.androidutils.geo.Direction
 import `in`.avimarine.androidutils.geo.Speed
 import `in`.avimarine.androidutils.units.SpeedUnits
@@ -21,58 +20,80 @@ internal object HistoryDataSource {
 
 
     fun addHistory(measurement: Measurement, context: Context) {
-        addHistory(measurement.loc1,
-                measurement.loc2,
-                measurement.spd,
-                measurement.dir,
-                context)
-    }
-    /**
-     * Speed in knots, dir in degrees
-     */
-    private fun addHistory(loc1: Location, loc2: Location, spd: Speed, dir: Direction, context: Context) {
         val m: HashMap<String, Any> = HashMap()
-        m["Lon1"] = loc1.longitude
-        m["Lat1"] = loc1.latitude
-        m["Lon2"] = loc2.longitude
-        m["Lat2"] = loc2.latitude
-        m["time1"] = loc1.time
-        m["time2"] = loc2.time
-        m["speedKnots"] = spd.getValue(SpeedUnits.Knots)
-        m["direction"] = dir.getTrueValue()
+        m["Lon1"] = measurement.loc1.longitude
+        m["Lat1"] = measurement.loc1.latitude
+        m["Lon2"] = measurement.loc2.longitude
+        m["Lat2"] = measurement.loc2.latitude
+        m["time1"] = measurement.loc1.time
+        m["time2"] = measurement.loc2.time
+        m["speedKnots"] = measurement.spd.getValue(SpeedUnits.Knots)
+        m["direction"] = measurement.dir.getTrueValue()
+        m["spdErr"] = measurement.spdError.getValue(SpeedUnits.Knots)
+        m["dirErr"] = measurement.dirError
         val o = JSONObject(m as Map<*, *>)
         Preferences.addHistory(o, context, MAX_HISTORY)
     }
 
     fun getHistoryList(context: Context): List<Measurement> {
         val ret = ArrayList<Measurement>()
-        try {
+        return try {
             val ja = JSONArray(Preferences.getHistory(context))
             for (i in 0 until ja.length()) {
                 val entry = ja.getJSONObject(i)
-                val l1 = Location("")
-                l1.longitude = entry.getDouble("Lon1")
-                l1.latitude = entry.getDouble("Lat1")
-                l1.time = entry.getLong("time1")
-                val l2 = Location("")
-                l2.longitude = entry.getDouble("Lon2")
-                l2.latitude = entry.getDouble("Lat2")
-                l2.time = entry.getLong("time2")
-                if (entry.has("speedKnots")) {
-                    val spd = entry.getDouble("speedKnots")
-                    val h = Measurement(l1, l2, Speed(spd, SpeedUnits.Knots), Direction(entry.getDouble("direction"),
-                        l2
-                    ))
-                    ret.add(h)
-                } else {
-                    val spd = entry.getDouble("speed")
-                    val h = Measurement(l1, l2, Speed(spd, SpeedUnits.MetersPerMinute), Direction(entry.getDouble("direction"),l2))
-                    ret.add(h)
-                }
+                ret.add(getHistoryItem(entry))
             }
-            return ret.reversed()
+            ret.reversed()
         } catch (e: JSONException) {
-            return ret
+            ret
+        }
+    }
+
+    fun getLastMeasurements(context: Context): Measurement? {
+        return try {
+            val ja = JSONArray(Preferences.getHistory(context))
+            if (ja.length()==0)
+                return null
+            getHistoryItem(ja.getJSONObject(ja.length()-1))
+        } catch (e: JSONException) {
+            return null
+        }
+    }
+
+    private fun getHistoryItem(jo: JSONObject): Measurement {
+        val l1 = Location("")
+        l1.longitude = jo.getDouble("Lon1")
+        l1.latitude = jo.getDouble("Lat1")
+        l1.time = jo.getLong("time1")
+        val l2 = Location("")
+        l2.longitude = jo.getDouble("Lon2")
+        l2.latitude = jo.getDouble("Lat2")
+        l2.time = jo.getLong("time2")
+        var spdError = 0.0
+        var dirError = 0.0
+        if (jo.has("spdErr")){
+            spdError = jo.getDouble("spdErr")
+        }
+        if (jo.has("dirErr")){
+            dirError = jo.getDouble("dirErr")
+        }
+        return if (jo.has("speedKnots")) {
+            val spd = jo.getDouble("speedKnots")
+            Measurement(
+                l1, l2, Speed(spd, SpeedUnits.Knots), Direction(
+                    jo.getDouble("direction"),
+                    l2
+                ), Speed(spdError, SpeedUnits.Knots), dirError
+            )
+        } else {
+            val spd = jo.getDouble("speed")
+            Measurement(
+                l1,
+                l2,
+                Speed(spd, SpeedUnits.MetersPerMinute),
+                Direction(jo.getDouble("direction"), l2),
+                Speed(spdError, SpeedUnits.Knots), dirError
+            )
         }
     }
 }
