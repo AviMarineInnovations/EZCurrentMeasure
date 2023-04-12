@@ -25,13 +25,11 @@ import `in`.avimarine.androidutils.*
 import `in`.avimarine.androidutils.LocationPermissions.Companion.PERMISSIONS_REQUEST_LOCATION_UI
 import `in`.avimarine.androidutils.LocationPermissions.Companion.arePermissionsGranted
 import `in`.avimarine.androidutils.LocationPermissions.Companion.askForLocationPermission
-import `in`.avimarine.androidutils.geo.Speed
 import `in`.avimarine.androidutils.units.SpeedUnits
-import `in`.avimarine.seawatercurrentmeasure.databinding.ActivityMainNewBinding
+import `in`.avimarine.seawatercurrentmeasure.databinding.ActivityMainBinding
 import `in`.avimarine.seawatercurrentmeasure.ui.GPSViewModel
 import `in`.avimarine.seawatercurrentmeasure.ui.MainViewModel
 import `in`.avimarine.seawatercurrentmeasure.ui.UnitsViewModel
-import java.lang.Math.floor
 
 
 class MainActivity : AppCompatActivity() {
@@ -58,12 +56,12 @@ class MainActivity : AppCompatActivity() {
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationCallback: LocationCallback
     private lateinit var binder: LocationUpdatesService.LocalBinder
-    private lateinit var binding: ActivityMainNewBinding
+    private lateinit var binding: ActivityMainBinding
     private var lastMeasurement: Measurement? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityMainNewBinding.inflate(layoutInflater)
+        binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         initForegroundService()
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
