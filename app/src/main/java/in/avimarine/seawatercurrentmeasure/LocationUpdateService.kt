@@ -90,20 +90,20 @@ class LocationUpdatesService:Service() {
         get() {
             val stopIntent = Intent(this, LocationUpdatesService::class.java)
             val launchIntent = Intent(this, MainActivity::class.java)
-            launchIntent.setAction(Intent.ACTION_MAIN);
+            launchIntent.action = Intent.ACTION_MAIN;
             launchIntent.addCategory(Intent.CATEGORY_LAUNCHER);
-            val text = Utils.getLocationText(mLocation)
+            val text = if (this::mLocation.isInitialized) Utils.getLocationText(mLocation) else ""
             stopIntent.putExtra(EXTRA_STOPPED_FROM_NOTIFICATION, true)
             val servicePendingIntent = PendingIntent.getService(this, 0, stopIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT)
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
             val activityPendingIntent = PendingIntent.getActivity(this, 0,
-                launchIntent, 0)
+                launchIntent, PendingIntent.FLAG_IMMUTABLE)
             val builder = NotificationCompat.Builder(this, CHANNEL_ID)
                 .addAction(R.drawable.ic_launch, getString(R.string.launch_activity),
                     activityPendingIntent)
                 .addAction(R.drawable.ic_cancel, getString(R.string.stop_measurement),
                     servicePendingIntent)
-                .setContentTitle(Utils.getLocationTitle(this,StartTime , AutoFinishInterval, delayedStartTime, autoStartInterval))
+                .setContentTitle(Utils.getLocationTitle(StartTime , AutoFinishInterval, delayedStartTime, autoStartInterval))
                 .setOngoing(true)
                 .setPriority(NotificationCompat.PRIORITY_MAX)
                 .setSmallIcon(R.mipmap.ic_launcher)

@@ -13,10 +13,6 @@ import java.util.*
  * first created by aayaffe on 14/09/2019.
  */
 internal object Utils {
-    val Any.TAG: String
-        get() {
-            return javaClass.simpleName
-        }
     val KEY_REQUESTING_LOCATION_UPDATES = "requesting_locaction_updates"
     /**
      * Returns true if requesting location updates, otherwise returns false.
@@ -47,7 +43,7 @@ internal object Utils {
         else
             "(" + location.getLatitude() + ", " + location.getLongitude() + ")"
     }
-    fun getLocationTitle(context:Context, startTime:Long , autoFinishInterval: Long, delayedStartTime:Long, delayedStartInterval:Long):String {
+    fun getLocationTitle(startTime:Long , autoFinishInterval: Long, delayedStartTime:Long, delayedStartInterval:Long):String {
         if (autoFinishInterval - (System.currentTimeMillis() - startTime) < 0){
             return "Auto start in progress..."
         }
