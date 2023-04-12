@@ -5,13 +5,16 @@
             app:entries="@array/speed"
             app:entryValues="@array/speed_alias"
             app:key="speed_unit"
-            app:title="Speed Units" />
+            app:title="Speed Units"
+            android:defaultValue="knots"/>
     <SwitchPreference
             android:key="magnetic"
-            android:title="Use Magnetic Direction" />
+            android:title="Use Magnetic Direction"
+            android:defaultValue="false"/>
     <SwitchPreference
             android:key="from_notation"
-            android:title="Use Wind Notation (Current direction from origin)" />
+            android:title="Use Wind Notation (Current direction from origin)"
+            android:defaultValue="false"/>
     <ListPreference
             app:entries="@array/delayed_start"
             app:entryValues="@array/delayed_start_alias"
