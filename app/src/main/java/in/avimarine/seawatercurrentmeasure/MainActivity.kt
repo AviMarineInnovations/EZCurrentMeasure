@@ -76,17 +76,23 @@ class MainActivity : AppCompatActivity() {
                     lastLocation = location
                     lastLocationTime = location.time
                     binding.gps = GPSViewModel(location)
+                    binding.gpsAccuracy.clearColorFilter()
                 }
             }
 
             override fun onLocationAvailability(locationAvailability: LocationAvailability) {
                 if (!locationAvailability.isLocationAvailable) {
+                    val loc = Location("a")
+                    loc.accuracy = 150.0f
                     locationIntoTextViews(
-                        Location("a"),
+                        loc,
                         binding.textTime,
                         binding.gpsAccuracy,
                         true
                     )
+                    binding.gpsAccuracy.setColorFilter(Color.RED)
+                } else {
+                    binding.gpsAccuracy.clearColorFilter()
                 }
             }
         }
@@ -257,10 +263,6 @@ class MainActivity : AppCompatActivity() {
             binding.gpsAccuracy,
             true
         )
-//        binding.textSpeed.text = "?"
-//        binding.textDir.text = "?"
-//        binding.textDirErr.text = "?"
-//        binding.textSpdErr.text = "?"
         if (::countDownToStartTimer.isInitialized) {
             countDownToStartTimer.cancel();
         }
@@ -339,7 +341,8 @@ class MainActivity : AppCompatActivity() {
         LocalBroadcastManager.getInstance(this).registerReceiver(
             myReceiver,
             IntentFilter(LocationUpdatesService.ACTION_BROADCAST)
-        );
+        )
+        binding.gpsAccuracy.setColorFilter(Color.RED)
     }
 
     override fun onStart() {
