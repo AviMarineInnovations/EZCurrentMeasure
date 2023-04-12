@@ -1,6 +1,7 @@
 package `in`.avimarine.seawatercurrentmeasure
 
 import android.os.Bundle
+import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.RecyclerView
@@ -23,5 +24,13 @@ class HistoryActivity : AppCompatActivity() {
             resources.configuration.orientation
         )
         recyclerView.addItemDecoration(dividerItemDecoration)
+        if (HistoryDataSource.getHistoryList(this).isEmpty()) {
+            binding.historyRecyclerView.visibility = View.GONE;
+            binding.emptyView.visibility = View.VISIBLE;
+        }
+        else {
+            binding.historyRecyclerView.visibility = View.VISIBLE;
+            binding.emptyView.visibility = View.GONE;
+        }
     }
 }

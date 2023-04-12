@@ -10,4 +10,5 @@
     <string name="title_activity_history">History</string>
     <string name="direction_label">Direction:</string>
     <string name="speed_label">Speed:</string>
+    <string name="no_data_available">No previous measurments on record</string>
 </resources>
